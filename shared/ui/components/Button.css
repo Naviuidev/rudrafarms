@@ -1,0 +1,73 @@
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1.5px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--primary-dark);
+  font-weight: 600;
+  line-height: 1;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn--primary {
+  background: var(--primary);
+  color: #fff;
+}
+
+.btn--primary:hover {
+  background: var(--primary-dark);
+}
+
+.btn--secondary {
+  background: var(--secondary);
+  color: var(--text-primary);
+}
+
+.btn--secondary:hover {
+  background: #e08e06;
+}
+
+.btn--outline {
+  background: var(--surface);
+  border-color: var(--primary);
+  color: var(--primary-dark);
+}
+
+.btn--outline:hover {
+  background: var(--primary-light);
+}
+
+.btn--ghost {
+  background: transparent;
+  color: var(--primary-dark);
+}
+
+.btn--ghost:hover {
+  background: var(--primary-light);
+}
+
+.btn--danger {
+  background: var(--danger);
+  color: #fff;
+}
+
+.btn--danger:hover {
+  background: #b91c1c;
+}

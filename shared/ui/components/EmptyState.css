@@ -1,0 +1,32 @@
+.state-card {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 36px 20px;
+  text-align: center;
+  background: var(--surface);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+}
+
+.state-card h2 {
+  font-size: 1.35rem;
+}
+
+.state-card p {
+  max-width: 42ch;
+}
+
+.state-card__mark {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  margin-bottom: 4px;
+  border-radius: 16px;
+  background: var(--primary-light);
+}
+
+.state-card .btn {
+  margin-top: 8px;
+}

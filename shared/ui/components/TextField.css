@@ -1,0 +1,51 @@
+.field {
+  display: grid;
+  gap: 6px;
+}
+
+.field label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.field input,
+.field textarea,
+.field select {
+  width: 100%;
+  min-height: 48px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text-primary);
+}
+
+.field textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.field input:focus,
+.field textarea:focus,
+.field select:focus {
+  border-color: var(--primary);
+  outline: 2px solid var(--primary-light);
+  outline-offset: 1px;
+}
+
+.field__hint {
+  font-size: 0.8125rem;
+}
+
+.field__error {
+  color: var(--danger);
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.field--error input,
+.field--error textarea,
+.field--error select {
+  border-color: var(--danger);
+}

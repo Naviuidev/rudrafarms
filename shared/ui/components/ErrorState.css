@@ -1,0 +1,22 @@
+.error-card {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+  padding: 24px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: var(--radius);
+}
+
+.error-card h2 {
+  font-size: 1.35rem;
+  color: var(--text-primary);
+}
+
+.error-card p {
+  color: var(--text-primary);
+}
+
+.error-card .btn {
+  margin-top: 8px;
+}

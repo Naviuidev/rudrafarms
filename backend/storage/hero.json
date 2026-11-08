@@ -1,0 +1,287 @@
+{
+    "publishedId": "fbcf0c5e-f2f2-4328-98ef-623c830242d3",
+    "sections": [
+        {
+            "eyebrow": "Farm to home",
+            "title": "Fresh from the farm, at your door every morning.",
+            "description": "Cow milk, buffalo milk, curd, vegetables, and pantry staples. Subscribe for a daily drop, or place a quick order when you need something today.",
+            "primaryCta": {
+                "label": "Start a subscription",
+                "to": "/subscriptions"
+            },
+            "secondaryCta": {
+                "label": "Order for today",
+                "to": "/quick-delivery"
+            },
+            "showHeroImage": true,
+            "heroImage": "/images/hero.svg",
+            "heroImageAlt": "A morning farm with green fields and a bottle of milk",
+            "layout": "split",
+            "backgroundMode": "none",
+            "backgroundImage": "",
+            "sliderImages": [
+                "",
+                "",
+                ""
+            ],
+            "badges": [
+                {
+                    "enabled": true,
+                    "title": "Before 7 AM",
+                    "subtitle": "Daily subscription drop",
+                    "image": ""
+                },
+                {
+                    "enabled": false,
+                    "title": "",
+                    "subtitle": "",
+                    "image": ""
+                },
+                {
+                    "enabled": false,
+                    "title": "",
+                    "subtitle": "",
+                    "image": ""
+                }
+            ],
+            "id": "f23ac3bb-c9eb-403e-a800-1c18209769e0",
+            "name": "Home hero",
+            "updatedAt": "2026-11-05 20:44:33"
+        },
+        {
+            "eyebrow": "Farm to home",
+            "title": "Fresh from the farm, every morning.",
+            "description": "Milk, curd, and produce delivered to your door.",
+            "primaryCta": {
+                "label": "Shop the farm",
+                "to": "/shop"
+            },
+            "secondaryCta": {
+                "label": "",
+                "to": "/shop"
+            },
+            "showHeroImage": false,
+            "heroImage": "/images/hero.svg",
+            "heroImageAlt": "A morning farm with green fields and a bottle of milk",
+            "layout": "banner",
+            "backgroundMode": "image",
+            "backgroundImage": "/images/hero.svg",
+            "sliderImages": [
+                "",
+                "",
+                ""
+            ],
+            "badges": [
+                {
+                    "enabled": true,
+                    "title": "Before 7 AM",
+                    "subtitle": "Daily subscription drop",
+                    "image": ""
+                },
+                {
+                    "enabled": false,
+                    "title": "",
+                    "subtitle": "",
+                    "image": ""
+                },
+                {
+                    "enabled": false,
+                    "title": "",
+                    "subtitle": "",
+                    "image": ""
+                }
+            ],
+            "id": "c50dd3b0-64cf-4e1b-b4d2-fce5d330a292",
+            "name": "Photo banner",
+            "updatedAt": "2026-11-05 20:47:41"
+        },
+        {
+            "eyebrow": "Farm to home",
+            "title": "Fresh from the farm, every morning.",
+            "description": "Milk, curd, and produce delivered to your door.",
+            "primaryCta": {
+                "label": "Shop the farm",
+                "to": "/shop"
+            },
+            "secondaryCta": {
+                "label": "",
+                "to": "/shop"
+            },
+            "showHeroImage": false,
+            "heroImage": "/images/hero.svg",
+            "heroImageAlt": "A morning farm with green fields and a bottle of milk",
+            "layout": "banner",
+            "backgroundMode": "image",
+            "backgroundImage": "/images/hero.svg",
+            "sliderImages": [
+                "",
+                "",
+                ""
+            ],
+            "badges": [
+                {
+                    "enabled": true,
+                    "title": "Before 7 AM",
+                    "subtitle": "Daily subscription drop",
+                    "image": ""
+                },
+                {
+                    "enabled": false,
+                    "title": "",
+                    "subtitle": "",
+                    "image": ""
+                },
+                {
+                    "enabled": false,
+                    "title": "",
+                    "subtitle": "",
+                    "image": ""
+                }
+            ],
+            "id": "c2445cd9-39aa-4a0c-92e5-75c58393f93a",
+            "name": "Photo banner",
+            "updatedAt": "2026-11-05 20:48:17"
+        },
+        {
+            "eyebrow": "Farm to home",
+            "title": "Fresh from the farm, at your door every morning.",
+            "description": "Cow milk, buffalo milk, curd, vegetables, and pantry staples. Subscribe for a daily drop, or place a quick order when you need something today.",
+            "primaryCta": {
+                "label": "Start a subscription",
+                "to": "/subscriptions"
+            },
+            "secondaryCta": {
+                "label": "Order for today",
+                "to": "/quick-delivery"
+            },
+            "showHeroImage": true,
+            "heroImage": "/images/hero.svg",
+            "heroImageAlt": "A morning farm with green fields and a bottle of milk",
+            "layout": "split",
+            "backgroundMode": "none",
+            "backgroundImage": "",
+            "sliderImages": [
+                "",
+                "",
+                ""
+            ],
+            "badges": [
+                {
+                    "enabled": true,
+                    "title": "Before 7 AM",
+                    "subtitle": "Daily subscription drop",
+                    "image": ""
+                },
+                {
+                    "enabled": false,
+                    "title": "",
+                    "subtitle": "",
+                    "image": ""
+                },
+                {
+                    "enabled": false,
+                    "title": "",
+                    "subtitle": "",
+                    "image": ""
+                }
+            ],
+            "id": "babda3b1-2813-49c0-8995-313c69db246f",
+            "name": "Split hero",
+            "updatedAt": "2026-11-05 20:48:25"
+        },
+        {
+            "eyebrow": "Farm to home",
+            "title": "Farm fresh, at your door.",
+            "description": "A daily drop of milk and pantry staples.",
+            "primaryCta": {
+                "label": "Start a subscription",
+                "to": "/subscriptions"
+            },
+            "secondaryCta": {
+                "label": "",
+                "to": "/shop"
+            },
+            "showHeroImage": true,
+            "heroImage": "/images/hero.svg",
+            "heroImageAlt": "A morning farm with green fields and a bottle of milk",
+            "layout": "portrait",
+            "backgroundMode": "image",
+            "backgroundImage": "/images/hero.svg",
+            "sliderImages": [
+                "",
+                "",
+                ""
+            ],
+            "badges": [
+                {
+                    "enabled": true,
+                    "title": "Before 7 AM",
+                    "subtitle": "Daily subscription drop",
+                    "image": ""
+                },
+                {
+                    "enabled": false,
+                    "title": "",
+                    "subtitle": "",
+                    "image": ""
+                },
+                {
+                    "enabled": false,
+                    "title": "",
+                    "subtitle": "",
+                    "image": ""
+                }
+            ],
+            "id": "9de65762-bb09-4260-b055-ad8ee8c111d8",
+            "name": "Portrait banner",
+            "updatedAt": "2026-11-05 20:48:38"
+        },
+        {
+            "eyebrow": "Rudras Farm Fresh",
+            "title": "The morning farm, delivered.",
+            "description": "Subscribe once. We bring the farm to your door.",
+            "primaryCta": {
+                "label": "Start a subscription",
+                "to": "/subscriptions"
+            },
+            "secondaryCta": {
+                "label": "Order for today",
+                "to": "/quick-delivery"
+            },
+            "showHeroImage": false,
+            "heroImage": "/images/hero.svg",
+            "heroImageAlt": "A morning farm with green fields and a bottle of milk",
+            "layout": "center",
+            "backgroundMode": "image",
+            "backgroundImage": "/images/hero.svg",
+            "sliderImages": [
+                "",
+                "",
+                ""
+            ],
+            "badges": [
+                {
+                    "enabled": true,
+                    "title": "Before 7 AM",
+                    "subtitle": "Daily subscription drop",
+                    "image": ""
+                },
+                {
+                    "enabled": false,
+                    "title": "",
+                    "subtitle": "",
+                    "image": ""
+                },
+                {
+                    "enabled": false,
+                    "title": "",
+                    "subtitle": "",
+                    "image": ""
+                }
+            ],
+            "id": "fbcf0c5e-f2f2-4328-98ef-623c830242d3",
+            "name": "Centered hero",
+            "updatedAt": "2026-11-05 20:49:16"
+        }
+    ]
+}

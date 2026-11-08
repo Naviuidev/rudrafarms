@@ -1,0 +1,38 @@
+{
+    "locations": [
+        {
+            "id": "appa-himayathsagar",
+            "name": "Appa Himayathsagar",
+            "city": "K.V.Rangareddy",
+            "state": "Telangana",
+            "pins": [
+                "500008"
+            ],
+            "subscription": true,
+            "circle": {
+                "latitude": 17.3706985,
+                "longitude": 78.3555211,
+                "radiusKm": 5
+            },
+            "polygon": null
+        },
+        {
+            "id": "pattikonda",
+            "name": "Pattikonda",
+            "city": "Kurnool",
+            "state": "Andhra Pradesh",
+            "pins": [
+                "518380"
+            ],
+            "quick": false,
+            "subscription": true,
+            "priority": 0,
+            "circle": {
+                "latitude": 15.3948233,
+                "longitude": 77.5008168,
+                "radiusKm": 20
+            },
+            "polygon": null
+        }
+    ]
+}

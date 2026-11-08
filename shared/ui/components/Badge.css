@@ -1,0 +1,20 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.badge--green {
+  background: var(--primary-light);
+  color: var(--primary-dark);
+}
+
+.badge--amber {
+  background: #fef3c7;
+  color: var(--text-primary);
+}
