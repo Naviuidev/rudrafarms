@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import Button from '@brand/components/Button.jsx'
+import Dialog from '@brand/components/Dialog.jsx'
 import DocumentTitle from '@brand/components/DocumentTitle.jsx'
 import EmptyState from '@brand/components/EmptyState.jsx'
 import { TextField } from '@brand/components/TextField.jsx'
@@ -9,6 +10,8 @@ import QuantityStepper from '../components/QuantityStepper.jsx'
 import { useShop } from '../context/shopContext.js'
 import { useWebsiteOrdersGate } from '../hooks/useWebsiteOrdersGate.js'
 import { formatPrice } from '../data/catalog.js'
+
+const MIXED_CART_MESSAGE = 'Quick delivery and subscription items need separate checkouts.'
 
 export default function CartPage() {
   const place = useLocation()
@@ -24,9 +27,20 @@ export default function CartPage() {
     defaultAddress,
   } = useShop()
   const [code, setCode] = useState(coupon)
+  const [mixedPromptOpen, setMixedPromptOpen] = useState(false)
   const acceptingWebsiteOrders = useWebsiteOrdersGate()
   const quoted = Object.fromEntries(quote.items.map((line) => [line.key, line]))
   const quickItems = items.filter((item) => item.deliveryMode !== 'subscription')
+  const mixedCart = quote.orderKind === 'mixed'
+
+  useEffect(() => {
+    if (mixedCart && quoteStatus === 'ready') {
+      setMixedPromptOpen(true)
+    }
+    if (!mixedCart) {
+      setMixedPromptOpen(false)
+    }
+  }, [mixedCart, quoteStatus])
 
   return (
     <section className="section account-page">
@@ -100,7 +114,7 @@ export default function CartPage() {
                 const storeClosed = !acceptingWebsiteOrders && quickItems.length > 0
                 const deliveryNote = storeClosed
                   ? 'The store is closed. You can still review your cart; payment opens when checkout is on.'
-                  : !quote.serviceable && quote.serviceability?.message
+                  : !quote.serviceable && quote.serviceability?.message && !mixedCart
                     ? quote.serviceability.message
                     : !defaultAddress && quickItems.length > 0
                       ? 'Add a delivery address before checkout.'
@@ -110,7 +124,11 @@ export default function CartPage() {
               {defaultAddress && quickItems.length > 0 && !acceptingWebsiteOrders ? (
                 <Button type="button" disabled>Store is closed</Button>
               ) : (
-                <Button to={defaultAddress ? '/checkout' : '/addresses/new'} state={defaultAddress ? undefined : { from: `${place.pathname}${place.search}` }}>
+                <Button
+                  to={defaultAddress ? '/checkout' : '/addresses/new'}
+                  state={defaultAddress ? undefined : { from: `${place.pathname}${place.search}` }}
+                  disabled={mixedCart}
+                >
                   {defaultAddress ? 'Continue to checkout' : 'Add a delivery address'}
                 </Button>
               )}
@@ -118,6 +136,19 @@ export default function CartPage() {
           </div>
         )}
       </div>
+
+      <Dialog
+        open={mixedPromptOpen}
+        title="Separate checkouts"
+        onClose={() => setMixedPromptOpen(false)}
+      >
+        <p className="area-prompt__copy">{MIXED_CART_MESSAGE}</p>
+        <p className="subs-muted">Keep quick-delivery items here and checkout. Add subscription products from the Subscriptions page.</p>
+        <div className="dialog-form">
+          <Button type="button" onClick={() => setMixedPromptOpen(false)}>OK</Button>
+          <Button type="button" variant="outline" to="/subscriptions">Subscriptions</Button>
+        </div>
+      </Dialog>
     </section>
   )
 }
