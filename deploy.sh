@@ -4,9 +4,10 @@
 #   chmod +x deploy.sh
 #   ./deploy.sh
 #
-# Env: uploads backend/.env (or project-root .env) to the server each run.
-# Skip with SKIP_ENV=1. Your Mac file can keep APP_ENV=local; deploy forces production on the server.
-# Fill PROD_* in that file (DB, Razorpay, SMTP, etc.) before deploying.
+# Env: by default the server keeps its own backend/.env (MySQL credentials stay on Hostinger).
+# Push Mac → server only when you intend to: UPLOAD_ENV=1 ./deploy.sh
+# Legacy alias: SKIP_ENV=1 also skips upload. UPLOAD forces APP_ENV=production on the server file.
+# Fill PROD_* locally before using UPLOAD_ENV=1.
 
 set -euo pipefail
 
@@ -47,29 +48,47 @@ echo "==> Server: clone or update repository…"
 run_remote bash -s <<REMOTE
 set -euo pipefail
 mkdir -p "$(dirname "$APP_DIR")"
-LOCATIONS="$APP_DIR/backend/storage/locations.json"
-LOCATIONS_BACKUP=""
-if [[ -f "\$LOCATIONS" ]]; then
-  LOCATIONS_BACKUP="\$(mktemp)"
-  cp "\$LOCATIONS" "\$LOCATIONS_BACKUP"
-fi
+STORAGE="$APP_DIR/backend/storage"
+backup_storage_file() {
+  local path="\$1"
+  if [[ -f "\$path" ]]; then
+    local tmp="\$(mktemp)"
+    cp "\$path" "\$tmp"
+    echo "\$tmp"
+  fi
+}
+LOCATIONS="\$STORAGE/locations.json"
+LOCATIONS_BACKUP="\$(backup_storage_file "\$LOCATIONS")"
+HERO="\$STORAGE/hero.json"
+HERO_BACKUP="\$(backup_storage_file "\$HERO")"
+CATALOG_FLAG="\$STORAGE/catalog.seeded"
+CATALOG_BACKUP="\$(backup_storage_file "\$CATALOG_FLAG")"
 if [[ -d "$APP_DIR/.git" ]]; then
   cd "$APP_DIR"
   git fetch origin
   git checkout "$GIT_BRANCH"
   if ! git pull origin "$GIT_BRANCH"; then
-    echo "git pull blocked by local edits — resetting tracked files to origin/$GIT_BRANCH (storage/locations.json is restored from backup)."
+    echo "git pull blocked by local edits — resetting tracked files to origin/$GIT_BRANCH (server storage/*.json restored from backup)."
     git reset --hard "origin/$GIT_BRANCH"
   fi
 else
   git clone --branch "$GIT_BRANCH" "$GIT_REPO" "$APP_DIR"
 fi
-if [[ -n "\$LOCATIONS_BACKUP" && -f "\$LOCATIONS_BACKUP" ]]; then
-  mkdir -p "\$(dirname "\$LOCATIONS")"
-  cp "\$LOCATIONS_BACKUP" "\$LOCATIONS"
-  rm -f "\$LOCATIONS_BACKUP"
-  echo "Restored server storage/locations.json (admin delivery zones)."
-elif [[ ! -f "\$LOCATIONS" && -f "$APP_DIR/backend/storage/locations.example.json" ]]; then
+restore_storage_file() {
+  local dest="\$1"
+  local backup="\$2"
+  local label="\$3"
+  if [[ -n "\$backup" && -f "\$backup" ]]; then
+    mkdir -p "\$(dirname "\$dest")"
+    cp "\$backup" "\$dest"
+    rm -f "\$backup"
+    echo "Restored server \$label"
+  fi
+}
+restore_storage_file "\$LOCATIONS" "\$LOCATIONS_BACKUP" "storage/locations.json"
+restore_storage_file "\$HERO" "\$HERO_BACKUP" "storage/hero.json"
+restore_storage_file "\$CATALOG_FLAG" "\$CATALOG_BACKUP" "storage/catalog.seeded"
+if [[ ! -f "\$LOCATIONS" && -f "$APP_DIR/backend/storage/locations.example.json" ]]; then
   mkdir -p "\$(dirname "\$LOCATIONS")"
   cp "$APP_DIR/backend/storage/locations.example.json" "\$LOCATIONS"
   echo "Created storage/locations.json from locations.example.json"
@@ -98,10 +117,10 @@ elif [[ -f "$ROOT/.env" ]]; then
   ENV_SOURCE="$ROOT/.env"
 fi
 
-if [[ "${SKIP_ENV:-0}" == "1" ]]; then
-  echo "==> SKIP_ENV=1 — not uploading .env"
+if [[ "${SKIP_ENV:-0}" == "1" || "${UPLOAD_ENV:-0}" != "1" ]]; then
+  echo "==> Keeping server backend/.env (MySQL data is not touched by deploy). Use UPLOAD_ENV=1 to push .env from this Mac."
 elif [[ -z "$ENV_SOURCE" ]]; then
-  echo "ERROR: No .env found. Create backend/.env (or project root .env) with PROD_* values, then deploy again."
+  echo "ERROR: UPLOAD_ENV=1 but no local .env found. Create backend/.env (or project root .env) with PROD_* values."
   exit 1
 else
   echo "==> Upload API environment ($ENV_SOURCE → server backend/.env)…"
@@ -162,5 +181,14 @@ curl -fsS -o /dev/null -w "API subdomain HTTP %{http_code}\n" "https://api.rudra
 curl -fsS -o /dev/null -w "Admin subdomain HTTP %{http_code}\n" "https://admin.rudrasfarmfresh.in/" 2>/dev/null || echo "Admin subdomain: DNS not ready."
 
 echo
-echo "Done. .env is on the server at $APP_DIR/backend/.env (re-deploy to refresh)."
+run_remote bash -s <<REMOTE
+set -euo pipefail
+ENV_FILE="$APP_DIR/backend/.env"
+if [[ -f "\$ENV_FILE" ]]; then
+  echo "Server DB (name only): \$(grep -E '^PROD_DB_NAME=' "\$ENV_FILE" | head -1 || echo 'PROD_DB_NAME not set — fix .env on Hostinger')"
+else
+  echo "WARNING: no backend/.env on server. Create it in hPanel File Manager or run UPLOAD_ENV=1 once from Mac."
+fi
+REMOTE
+echo "Done. Code and frontends updated; MySQL on Hostinger is unchanged unless you use Admin → Farm data or UPLOAD_ENV=1 with wrong PROD_DB_*."
 echo "hPanel document roots: shop → public_html, admin → public_html/admin, api → public_html/api."

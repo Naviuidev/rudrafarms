@@ -5,3 +5,5 @@ vendor/
 .DS_Store
 *.sql
 backend/storage/locations.json
+backend/storage/catalog.seeded
+backend/storage/hero.json

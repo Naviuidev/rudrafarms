@@ -463,12 +463,19 @@ final class Catalog
 
     private static function seed(): void
     {
+        $pdo = Connection::pdo();
+        $hasCatalog =
+            (int) $pdo->query('SELECT COUNT(*) FROM units')->fetchColumn() > 0
+            || (int) $pdo->query('SELECT COUNT(*) FROM products')->fetchColumn() > 0;
+
         if (is_file(self::seedFlag())) {
-            return;
+            if ($hasCatalog) {
+                return;
+            }
+            @unlink(self::seedFlag());
         }
 
-        $pdo = Connection::pdo();
-        if ((int) $pdo->query('SELECT COUNT(*) FROM units')->fetchColumn() > 0) {
+        if ($hasCatalog) {
             self::markSeeded();
 
             return;
