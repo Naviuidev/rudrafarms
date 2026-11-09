@@ -6,6 +6,7 @@ import EmptyState from '@brand/components/EmptyState.jsx'
 import ErrorState from '@brand/components/ErrorState.jsx'
 import { SelectField, TextField } from '@brand/components/TextField.jsx'
 import { useToast } from '@brand/toastContext.js'
+import { mediaUrl } from '@shared/config/mediaUrl.js'
 import { loadAdminCatalog, saveAdminCatalog, uploadCatalogImage } from '../api/catalogApi.js'
 
 const tabs = [
@@ -20,10 +21,7 @@ function rupees(value) {
 }
 
 function catalogImage(src) {
-  if (!src) return ''
-  if (/^https?:\/\//.test(src)) return src
-  const origin = (import.meta.env.VITE_STORE_URL || 'http://localhost:5173').replace(/\/$/, '')
-  return `${origin}${src.startsWith('/') ? src : `/${src}`}`
+  return mediaUrl(src)
 }
 
 function blankVariant(unitId, isDefault = false) {

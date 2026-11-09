@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { getApiBase } from '@shared/config/apiBase.js'
+import { normalizeCatalog } from '@shared/lib/normalizeCatalog.js'
 import { authToken } from './authApi.js'
 
 const base = getApiBase()
@@ -14,10 +15,10 @@ function fail(error, fallback) {
 export async function loadCatalog() {
   try {
     const { data } = await axios.get(`${base}/api/catalog.php`)
-    return {
+    return normalizeCatalog({
       categories: Array.isArray(data?.categories) ? data.categories : [],
       products: Array.isArray(data?.products) ? data.products : [],
-    }
+    })
   } catch (error) {
     fail(error, 'The product catalog is unavailable.')
   }

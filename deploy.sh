@@ -149,6 +149,17 @@ rsync -avz --delete \
   "$ROOT/customer/dist/" \
   "$SSH_TARGET:$WEB_ROOT/"
 
+echo "==> Merge uploaded product images into shop /images…"
+run_remote bash -s <<REMOTE
+set -euo pipefail
+API_IMAGES="$APP_DIR/backend/public/images"
+if [[ -d "\$API_IMAGES" ]]; then
+  mkdir -p "$WEB_ROOT/images"
+  rsync -a "\$API_IMAGES/" "$WEB_ROOT/images/"
+  echo "Merged API uploads into public_html/images"
+fi
+REMOTE
+
 echo "==> Upload control center (admin/dist)…"
 rsync -avz --delete \
   -e "${RSYNC_SSH[*]}" \

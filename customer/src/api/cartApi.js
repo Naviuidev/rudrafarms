@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { getApiBase } from '@shared/config/apiBase.js'
+import { mediaUrl } from '@shared/config/mediaUrl.js'
 
 const base = getApiBase()
 
@@ -26,7 +27,12 @@ export async function quoteCart(payload) {
   try {
     const { data } = await axios.post(`${base}/api/cart/quote.php`, payload)
     return {
-      items: Array.isArray(data?.items) ? data.items : [],
+      items: Array.isArray(data?.items)
+        ? data.items.map((line) => ({
+          ...line,
+          image: mediaUrl(line.image),
+        }))
+        : [],
       subtotal: Number(data?.subtotal) || 0,
       discount: Number(data?.discount) || 0,
       coupon: {
