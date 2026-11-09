@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Navigate, useNavigate } from 'react-router-dom'
+import { Navigate } from 'react-router-dom'
 import Button from '@brand/components/Button.jsx'
 import DocumentTitle from '@brand/components/DocumentTitle.jsx'
 import Logo from '@brand/components/Logo.jsx'
@@ -8,11 +8,11 @@ import { useToast } from '@brand/toastContext.js'
 import { adminSignedIn, signInAdmin } from '../auth/session.js'
 
 export default function AdminLoginPage() {
-  const navigate = useNavigate()
   const showToast = useToast()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [authed, setAuthed] = useState(() => adminSignedIn())
 
   function submit(event) {
     event.preventDefault()
@@ -25,10 +25,10 @@ export default function AdminLoginPage() {
       return
     }
     showToast({ title: 'Welcome back', message: 'The control center is open.' })
-    navigate('/')
+    setAuthed(true)
   }
 
-  if (adminSignedIn()) return <Navigate to="/" replace />
+  if (authed || adminSignedIn()) return <Navigate to="/" replace />
 
   return (
     <div className="auth-split auth-login">
