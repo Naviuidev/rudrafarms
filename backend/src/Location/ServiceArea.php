@@ -153,26 +153,35 @@ final class ServiceArea
                 }
 
                 $name = (string) ($zone['name'] ?? 'Service area');
-                if (!empty($zone['quick'])) {
-                    $quickZones[] = $name;
-                    if ($selectedQuick === '') {
-                        $selectedQuick = $name;
-                    }
-                }
                 if (!empty($zone['subscription'])) {
                     $subscriptionZones[] = $name;
                     if ($selectedSubscription === '') {
                         $selectedSubscription = $name;
                     }
                 }
+                if (!empty($zone['quick'])) {
+                    $quickZones[] = $name;
+                    if ($selectedQuick === '') {
+                        $selectedQuick = $name;
+                    }
+                } elseif (!empty($zone['subscription'])) {
+                    // Vizag-style zones: one map area for both quick cart and subscriptions.
+                    $quickZones[] = $name;
+                    if ($selectedQuick === '') {
+                        $selectedQuick = $name;
+                    }
+                }
             }
         }
+
+        $quickZones = array_values(array_unique($quickZones));
+        $subscriptionZones = array_values(array_unique($subscriptionZones));
 
         return [
             'quick' => $quickZones !== [],
             'subscription' => $subscriptionZones !== [],
-            'quickZones' => array_values(array_unique($quickZones)),
-            'subscriptionZones' => array_values(array_unique($subscriptionZones)),
+            'quickZones' => $quickZones,
+            'subscriptionZones' => $subscriptionZones,
             'selectedQuickZone' => $selectedQuick,
             'selectedSubscriptionZone' => $selectedSubscription,
         ];
@@ -217,9 +226,6 @@ final class ServiceArea
         if ($purpose === 'checkout' || $purpose === 'quick') {
             if ($inQuick) {
                 return self::OUTSIDE_SERVICE_MESSAGE;
-            }
-            if ($inSubscription && !$inQuick) {
-                return 'Quick delivery is not available at this address. Subscription products use a separate checkout.';
             }
             $served = $this->zoneNames(quick: true);
             if ($served !== []) {
