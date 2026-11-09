@@ -47,13 +47,32 @@ echo "==> Server: clone or update repository…"
 run_remote bash -s <<REMOTE
 set -euo pipefail
 mkdir -p "$(dirname "$APP_DIR")"
+LOCATIONS="$APP_DIR/backend/storage/locations.json"
+LOCATIONS_BACKUP=""
+if [[ -f "\$LOCATIONS" ]]; then
+  LOCATIONS_BACKUP="\$(mktemp)"
+  cp "\$LOCATIONS" "\$LOCATIONS_BACKUP"
+fi
 if [[ -d "$APP_DIR/.git" ]]; then
   cd "$APP_DIR"
   git fetch origin
   git checkout "$GIT_BRANCH"
-  git pull origin "$GIT_BRANCH"
+  if ! git pull origin "$GIT_BRANCH"; then
+    echo "git pull blocked by local edits — resetting tracked files to origin/$GIT_BRANCH (storage/locations.json is restored from backup)."
+    git reset --hard "origin/$GIT_BRANCH"
+  fi
 else
   git clone --branch "$GIT_BRANCH" "$GIT_REPO" "$APP_DIR"
+fi
+if [[ -n "\$LOCATIONS_BACKUP" && -f "\$LOCATIONS_BACKUP" ]]; then
+  mkdir -p "\$(dirname "\$LOCATIONS")"
+  cp "\$LOCATIONS_BACKUP" "\$LOCATIONS"
+  rm -f "\$LOCATIONS_BACKUP"
+  echo "Restored server storage/locations.json (admin delivery zones)."
+elif [[ ! -f "\$LOCATIONS" && -f "$APP_DIR/backend/storage/locations.example.json" ]]; then
+  mkdir -p "\$(dirname "\$LOCATIONS")"
+  cp "$APP_DIR/backend/storage/locations.example.json" "\$LOCATIONS"
+  echo "Created storage/locations.json from locations.example.json"
 fi
 REMOTE
 
