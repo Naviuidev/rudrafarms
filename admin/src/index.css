@@ -393,6 +393,95 @@ body:has(.auth-split) {
   max-width: 440px;
 }
 
+.config-overview {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+@media (min-width: 960px) {
+  .config-overview {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .config-overview__card:last-of-type {
+    grid-column: 1 / -1;
+  }
+}
+
+.config-overview__card h2 {
+  margin: 0 0 8px;
+  font-size: 1.05rem;
+}
+
+.config-overview__lead,
+.config-overview__hint,
+.config-overview__meta {
+  margin: 0 0 12px;
+  color: #4b5563;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.config-overview__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.config-overview__list li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: baseline;
+  font-size: 0.875rem;
+}
+
+.config-overview__list span {
+  font-weight: 600;
+  color: #111827;
+  min-width: 4.5rem;
+}
+
+.config-overview__checks {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+  font-size: 0.9rem;
+}
+
+.config-status {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.config-status--ok {
+  background: #e7f6ec;
+  color: #166534;
+}
+
+.config-status--warn {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.config-overview__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.config-overview__toolbar {
+  margin-top: 8px;
+}
+
 .farm-kinds {
   display: flex;
   flex-wrap: wrap;

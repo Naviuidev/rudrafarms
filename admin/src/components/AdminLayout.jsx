@@ -50,7 +50,7 @@ const sections = [
     links: [
       { to: '/website', label: 'Website', Icon: IconGlobe },
       { to: '/settings', label: 'Settings', Icon: IconGear },
-      { to: '/developer', label: 'Developer layer', Icon: IconCode },
+      { to: '/developer', label: 'Configs', Icon: IconCode },
     ],
   },
 ]
@@ -149,8 +149,8 @@ export default function AdminLayout() {
         </aside>
       ) : null}
       {onDeveloper ? (
-        <aside className="admin-secondary" aria-label="Developer layer">
-          <p className="admin-secondary__title">Developer layer</p>
+        <aside className="admin-secondary" aria-label="Configs">
+          <p className="admin-secondary__title">Configs</p>
           <nav className="admin-secondary__nav">
             {developerSections.map((item) => (
               <button

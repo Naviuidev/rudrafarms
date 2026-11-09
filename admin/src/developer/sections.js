@@ -1,10 +1,14 @@
 export const developerSections = [
-  { id: 'payments', label: 'Config payment' },
-  { id: 'database', label: 'DB config' },
-  { id: 'email', label: 'Email config' },
-  { id: 'data', label: 'Farm fresh data' },
+  { id: 'overview', label: 'Overview' },
+  { id: 'database', label: 'Database' },
+  { id: 'payments', label: 'Razorpay' },
+  { id: 'email', label: 'Email (SMTP)' },
+  { id: 'data', label: 'Farm data' },
 ]
 
 export function developerSection(value) {
-  return developerSections.some((section) => section.id === value) ? value : 'payments'
+  if (value === null || value === '' || value === undefined) {
+    return 'overview'
+  }
+  return developerSections.some((section) => section.id === value) ? value : 'overview'
 }

@@ -81,9 +81,18 @@ export default function DatabaseConfigPage({ password, initialConfig }) {
     <>
       <DocumentTitle title="DB config" />
       <div className="page-heading">
-        <p className="eyebrow">Database</p>
-        <h1>DB config</h1>
-        <p>Save the localhost and production database. The running environment uses the matching set.</p>
+        <p className="eyebrow">Configs</p>
+        <h1>Database</h1>
+        <p>
+          Localhost and production connection details. On the live server, saving production updates
+          {' '}
+          <code>backend/.env</code>
+          {' '}
+          — not File Manager
+          {' '}
+          <code>public_html</code>
+          .
+        </p>
       </div>
       <form className="panel settings-form developer-sheet pay-config" onSubmit={save} noValidate>
         <p className="muted">This {config.activeMode === 'production' ? 'server' : 'computer'} is using the {activeLabel} database.</p>

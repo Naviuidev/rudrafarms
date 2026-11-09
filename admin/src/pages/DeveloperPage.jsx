@@ -10,25 +10,26 @@ import { developerSection } from '../developer/sections.js'
 import { unlockPaymentConfig } from '../api/paymentsApi.js'
 import DatabaseConfigPage from './DatabaseConfigPage.jsx'
 import EmailConfigPanel from './EmailConfigPanel.jsx'
+import EnvironmentConfigPage from './EnvironmentConfigPage.jsx'
 import FarmDataPage from './FarmDataPage.jsx'
 import PaymentsPage from './PaymentsPage.jsx'
 
 const gates = {
   payments: {
-    title: 'Config payment',
-    copy: 'Enter the payments password to open Razorpay settings.',
+    title: 'Razorpay',
+    copy: 'Enter the payments password to open Razorpay keys and mode.',
   },
   database: {
-    title: 'DB config',
-    copy: 'Enter the database password to open the localhost and production connection.',
+    title: 'Database',
+    copy: 'Enter the database password to edit localhost and production connections (saved to backend/.env on the server).',
   },
   email: {
-    title: 'Email config',
-    copy: 'Enter the email password to open Gmail settings.',
+    title: 'Email (SMTP)',
+    copy: 'Enter the email password to open Gmail / SMTP settings.',
   },
   data: {
-    title: 'Farm fresh data',
-    copy: 'Enter the data password to open users, products, orders, and the other records.',
+    title: 'Farm data',
+    copy: 'Enter the data password to browse users, products, orders, and other records.',
   },
 }
 
@@ -70,6 +71,10 @@ export default function DeveloperPage() {
     }
   }
 
+  if (section === 'overview') {
+    return <EnvironmentConfigPage />
+  }
+
   const gate = gates[section] || gates.payments
   const open = section === 'email' ? session.email : section === 'data' ? session.data : section === 'database' ? session.database : session.payments
   if (!open) {
@@ -77,7 +82,7 @@ export default function DeveloperPage() {
       <>
         <DocumentTitle title={gate.title} />
         <div className="page-heading">
-          <p className="eyebrow">Developer</p>
+          <p className="eyebrow">Configs</p>
           <h1>{gate.title}</h1>
           <p>{gate.copy}</p>
         </div>
