@@ -200,9 +200,10 @@ final class SubscriptionService
     {
         $lat = (float) $presentedAddress['latitude'];
         $lng = (float) $presentedAddress['longitude'];
-        $check = ServiceArea::load()->check($lat, $lng, (string) ($presentedAddress['pin'] ?? ''));
+        $areas = ServiceArea::load();
+        $check = $areas->check($lat, $lng, (string) ($presentedAddress['pin'] ?? ''));
         if (empty($check['subscription'])) {
-            throw new SubscriptionException(ServiceArea::outsideMessage($check, 'subscription'));
+            throw new SubscriptionException($areas->outsideMessage($check, 'subscription'));
         }
     }
 

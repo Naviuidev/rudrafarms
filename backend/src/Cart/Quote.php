@@ -59,18 +59,19 @@ final class Quote
             ? 0
             : $config['deliveryFee'];
         $point = self::point($input);
-        $areas = ServiceArea::load()->check($point['latitude'], $point['longitude'], (string) ($input['pin'] ?? ''));
+        $serviceArea = ServiceArea::load();
+        $areas = $serviceArea->check($point['latitude'], $point['longitude'], (string) ($input['pin'] ?? ''));
         $serviceable = $point['present'] && $problems === 0 && $subtotal > 0 && $orderKind !== 'mixed';
-        $message = self::serviceMessage($point['present'], $orderKind, $areas, $problems);
+        $message = self::serviceMessage($point['present'], $orderKind, $areas, $problems, $serviceable);
 
         if ($orderKind === 'quick' && $point['present'] && $problems === 0 && $subtotal > 0 && !$areas['quick']) {
             $serviceable = false;
-            $message = ServiceArea::outsideMessage($areas, 'checkout');
+            $message = $serviceArea->outsideMessage($areas, 'checkout');
         }
 
         if ($orderKind === 'subscription' && $point['present'] && $problems === 0 && $subtotal > 0 && !$areas['subscription']) {
             $serviceable = false;
-            $message = ServiceArea::outsideMessage($areas, 'subscription');
+            $message = $serviceArea->outsideMessage($areas, 'subscription');
         }
 
         return [
@@ -293,7 +294,7 @@ final class Quote
     }
 
     /** @param array<string, mixed> $areas */
-    private static function serviceMessage(bool $hasPoint, string $orderKind, array $areas, int $problems): string
+    private static function serviceMessage(bool $hasPoint, string $orderKind, array $areas, int $problems, bool $serviceable): string
     {
         if ($orderKind === 'mixed') {
             return 'Quick delivery and subscription items need separate checkouts.';
@@ -304,16 +305,14 @@ final class Quote
         if ($problems > 0) {
             return 'Update the cart before checkout.';
         }
-        if ($orderKind === 'subscription') {
-            return $areas['subscription']
-                ? 'This address is in our Vizag service area. You can start a subscription any time.'
-                : ServiceArea::outsideMessage($areas, 'subscription');
+        if ($serviceable) {
+            return '';
         }
-        if ($areas['quick']) {
-            return 'This address is in our Vizag service area.';
+        if ($orderKind === 'subscription') {
+            return ServiceArea::load()->outsideMessage($areas, 'subscription');
         }
 
-        return ServiceArea::outsideMessage($areas, 'checkout');
+        return ServiceArea::load()->outsideMessage($areas, 'checkout');
     }
 
     /** @param array<string, mixed> $item */

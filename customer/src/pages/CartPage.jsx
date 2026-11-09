@@ -96,11 +96,17 @@ export default function CartPage() {
                   Remove coupon
                 </button>
               ) : null}
-              <p>
-                {!acceptingWebsiteOrders && quickItems.length > 0
+              {(() => {
+                const storeClosed = !acceptingWebsiteOrders && quickItems.length > 0
+                const deliveryNote = storeClosed
                   ? 'The store is closed. You can still review your cart; payment opens when checkout is on.'
-                  : (quote.serviceability.message || (defaultAddress ? '' : 'Add a delivery address before checkout.'))}
-              </p>
+                  : !quote.serviceable && quote.serviceability?.message
+                    ? quote.serviceability.message
+                    : !defaultAddress && quickItems.length > 0
+                      ? 'Add a delivery address before checkout.'
+                      : ''
+                return deliveryNote ? <p className={!quote.serviceable && quote.serviceability?.message ? 'cart-note' : undefined} role={!quote.serviceable ? 'alert' : 'status'}>{deliveryNote}</p> : null
+              })()}
               {defaultAddress && quickItems.length > 0 && !acceptingWebsiteOrders ? (
                 <Button type="button" disabled>Store is closed</Button>
               ) : (

@@ -203,28 +203,86 @@ final class ServiceArea
 
         $result['message'] = $result['allowed'] || !$hasPoint
             ? ''
-            : self::outsideMessage($result, $purpose);
+            : $this->outsideMessage($result, $purpose);
 
         return $result;
     }
 
     /** @param array<string, mixed> $result */
-    public static function outsideMessage(array $result, string $purpose = ''): string
+    public function outsideMessage(array $result, string $purpose = ''): string
     {
-        $zones = array_values(array_unique(array_merge(
-            is_array($result['quickZones'] ?? null) ? $result['quickZones'] : [],
-            is_array($result['subscriptionZones'] ?? null) ? $result['subscriptionZones'] : [],
-        )));
-        if ($zones !== []) {
-            $label = implode(', ', $zones);
+        $inQuick = !empty($result['quick']);
+        $inSubscription = !empty($result['subscription']);
 
-            return 'This location is outside our delivery area. We currently serve: ' . $label . '.';
-        }
-        if ($purpose === 'subscription') {
+        if ($purpose === 'checkout' || $purpose === 'quick') {
+            if ($inQuick) {
+                return self::OUTSIDE_SERVICE_MESSAGE;
+            }
+            if ($inSubscription && !$inQuick) {
+                return 'Quick delivery is not available at this address. Subscription products use a separate checkout.';
+            }
+            $served = $this->zoneNames(quick: true);
+            if ($served !== []) {
+                return 'This location is outside our quick delivery area. We currently serve: ' . implode(', ', $served) . '.';
+            }
+
             return self::OUTSIDE_SERVICE_MESSAGE;
         }
 
+        if ($purpose === 'subscription') {
+            if ($inSubscription) {
+                return self::OUTSIDE_SERVICE_MESSAGE;
+            }
+            if ($inQuick && !$inSubscription) {
+                return 'Subscription delivery is not set up for this address.';
+            }
+            $served = $this->zoneNames(subscription: true);
+            if ($served !== []) {
+                return 'This location is outside our subscription area. We currently serve: ' . implode(', ', $served) . '.';
+            }
+
+            return self::OUTSIDE_SERVICE_MESSAGE;
+        }
+
+        if ($inQuick || $inSubscription) {
+            return self::OUTSIDE_SERVICE_MESSAGE;
+        }
+
+        $served = $this->zoneNames();
+        if ($served !== []) {
+            return 'This location is outside our delivery area. We currently serve: ' . implode(', ', $served) . '.';
+        }
+
         return self::OUTSIDE_SERVICE_MESSAGE;
+    }
+
+    /** @return list<string> */
+    private function zoneNames(bool $quick = false, bool $subscription = false): array
+    {
+        $names = [];
+        $filterQuick = $quick && !$subscription;
+        $filterSubscription = $subscription && !$quick;
+
+        foreach ($this->config['zones'] as $zone) {
+            $name = trim((string) ($zone['name'] ?? ''));
+            if ($name === '') {
+                continue;
+            }
+            $allowsQuick = !empty($zone['quick']);
+            $allowsSubscription = !empty($zone['subscription']);
+            if ($filterQuick && !$allowsQuick) {
+                continue;
+            }
+            if ($filterSubscription && !$allowsSubscription) {
+                continue;
+            }
+            if (!$filterQuick && !$filterSubscription && !$allowsQuick && !$allowsSubscription) {
+                continue;
+            }
+            $names[] = $name;
+        }
+
+        return array_values(array_unique($names));
     }
 
     /** @param array<string, mixed> $zone */
