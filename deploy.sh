@@ -4,9 +4,9 @@
 #   chmod +x deploy.sh
 #   ./deploy.sh
 #
-# Env: one project-root .env (see .env.example) with APP_ENV=production and PROD_* values.
-# Mac builds read PROD_APP_URL for customer/admin; server needs backend/.env (or root .env).
-# This script does not upload your local .env.
+# Env: uploads backend/.env (or project-root .env) to the server each run.
+# Skip with SKIP_ENV=1. Your Mac file can keep APP_ENV=local; deploy forces production on the server.
+# Fill PROD_* in that file (DB, Razorpay, SMTP, etc.) before deploying.
 
 set -euo pipefail
 
@@ -70,10 +70,39 @@ else
   exit 1
 fi
 chmod -R u+rwX storage public/images 2>/dev/null || true
-if [[ ! -f .env ]]; then
-  echo "WARNING: $APP_DIR/backend/.env is missing. Copy .env.example and set APP_ENV=production and PROD_*."
-fi
 REMOTE
+
+ENV_SOURCE=""
+if [[ -f "$ROOT/backend/.env" ]]; then
+  ENV_SOURCE="$ROOT/backend/.env"
+elif [[ -f "$ROOT/.env" ]]; then
+  ENV_SOURCE="$ROOT/.env"
+fi
+
+if [[ "${SKIP_ENV:-0}" == "1" ]]; then
+  echo "==> SKIP_ENV=1 — not uploading .env"
+elif [[ -z "$ENV_SOURCE" ]]; then
+  echo "ERROR: No .env found. Create backend/.env (or project root .env) with PROD_* values, then deploy again."
+  exit 1
+else
+  echo "==> Upload API environment ($ENV_SOURCE → server backend/.env)…"
+  rsync -avz \
+    -e "${RSYNC_SSH[*]}" \
+    "$ENV_SOURCE" \
+    "$SSH_TARGET:$APP_DIR/backend/.env"
+  run_remote bash -s <<REMOTE
+set -euo pipefail
+ENV_FILE="$APP_DIR/backend/.env"
+chmod 600 "\$ENV_FILE"
+if grep -q '^APP_ENV=' "\$ENV_FILE"; then
+  sed -i.bak 's/^APP_ENV=.*/APP_ENV=production/' "\$ENV_FILE"
+  rm -f "\$ENV_FILE.bak"
+else
+  printf '\nAPP_ENV=production\n' >> "\$ENV_FILE"
+fi
+echo "Server APP_ENV: \$(grep '^APP_ENV=' "\$ENV_FILE" || true)"
+REMOTE
+fi
 
 echo "==> Upload shop (customer/dist)…"
 rsync -avz --delete \
@@ -114,5 +143,5 @@ curl -fsS -o /dev/null -w "API subdomain HTTP %{http_code}\n" "https://api.rudra
 curl -fsS -o /dev/null -w "Admin subdomain HTTP %{http_code}\n" "https://admin.rudrasfarmfresh.in/" 2>/dev/null || echo "Admin subdomain: DNS not ready."
 
 echo
-echo "Done. If the API fails, set $APP_DIR/backend/.env on the server and confirm"
+echo "Done. .env is on the server at $APP_DIR/backend/.env (re-deploy to refresh)."
 echo "hPanel document roots: shop → public_html, admin → public_html/admin, api → public_html/api."
