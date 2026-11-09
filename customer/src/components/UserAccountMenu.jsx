@@ -7,7 +7,7 @@ function prefersHoverMenu() {
     && window.matchMedia('(hover: hover) and (pointer: fine)').matches
 }
 
-export default function UserAccountMenu() {
+export default function UserAccountMenu({ className = '' }) {
   const { pathname, search } = useLocation()
   const navigate = useNavigate()
   const { account, logout } = useShop()
@@ -33,7 +33,7 @@ export default function UserAccountMenu() {
 
   if (!account) {
     return (
-      <NavLink to="/login" state={{ from: returnFrom }} className="tool">
+      <NavLink to="/login" state={{ from: returnFrom }} className={className ? `tool ${className}` : 'tool'}>
         <UserIcon />
         <span className="tool__label">Sign in</span>
       </NavLink>
@@ -56,7 +56,7 @@ export default function UserAccountMenu() {
   return (
     <div
       ref={rootRef}
-      className={`user-menu${open ? ' user-menu--open' : ''}`}
+      className={`user-menu${open ? ' user-menu--open' : ''}${className ? ` ${className}` : ''}`}
     >
       <button
         type="button"

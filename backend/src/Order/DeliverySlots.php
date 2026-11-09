@@ -73,63 +73,80 @@ final class DeliverySlots
     private static function quickOptions(array $query, array $quote): array
     {
         /** @var array<string, mixed> $config */
-        $config = require dirname(__DIR__, 2) . '/config/delivery.php';
-        $hours = StoreHours::get();
-        $config['open'] = $hours['open'];
-        $config['close'] = $hours['close'];
-        $managed = \App\Admin\DeliverySlotConfig::forCheckout();
-        $config['slots'] = $managed['slots'];
-        $config['cutoff']['express'] = $managed['expressCutoff'];
-        $config['cutoff']['same-day'] = $managed['sameDayCutoff'];
-        $config['etaMinutes']['express'] = $managed['expressEta'];
-        $config['scheduledDaysAhead'] = $managed['scheduledDays'];
-        $config['expressEnabled'] = $managed['expressEnabled'];
+        $config = self::deliveryConfig();
         if (!(bool) ($quote['serviceable'] ?? false)) {
             $zoneMessage = (string) ($quote['serviceability']['message'] ?? '');
         } else {
             $zoneMessage = '';
         }
 
-        $now = new DateTimeImmutable('now', new DateTimeZone((string) $config['timezone']));
-        $open = self::atTime($now, (string) $config['open']);
-        $close = self::atTime($now, (string) $config['close']);
-        $withinHours = $now >= $open && $now <= $close;
-        $slots = $withinHours
-            ? self::mergedQuickSlots($config, $now)
-            : self::scheduledSlots($config, $now, 'scheduled');
-        $serviceable = (bool) ($quote['serviceable'] ?? false);
-
-        if (!$serviceable) {
+        if (!StoreHours::acceptingWebsiteOrders()) {
             return [
                 'orderKind' => 'quick',
                 'available' => false,
-                'message' => $zoneMessage ?: 'Add a delivery address with a map pin.',
-                'operatingHours' => ['open' => $config['open'], 'close' => $config['close']],
-                'slots' => $slots,
+                'message' => 'The store is closed.',
+                'operatingHours' => null,
+                'slots' => [],
                 'schedules' => [],
             ];
         }
 
-        if (!$withinHours) {
-            return [
-                'orderKind' => 'quick',
-                'available' => $slots !== [],
-                'message' => $slots === []
-                    ? 'The store is closed. Orders open ' . $config['open'] . '–' . $config['close'] . ' IST.'
-                    : 'The store is closed for today. Choose one of the later windows.',
-                'operatingHours' => ['open' => $config['open'], 'close' => $config['close']],
-                'slots' => $slots,
-                'schedules' => [],
-            ];
-        }
+        $serviceable = (bool) ($quote['serviceable'] ?? false);
+        $message = $serviceable ? '' : ($zoneMessage ?: 'Add a delivery address with a map pin.');
 
         return [
             'orderKind' => 'quick',
-            'available' => $slots !== [],
-            'message' => $slots === [] ? 'No delivery windows are open right now. Try again later today or tomorrow.' : '',
-            'operatingHours' => ['open' => $config['open'], 'close' => $config['close']],
-            'slots' => $slots,
+            'available' => $serviceable,
+            'message' => $message,
+            'operatingHours' => null,
+            'slots' => [],
             'schedules' => [],
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private static function deliveryConfig(): array
+    {
+        /** @var array<string, mixed> $config */
+        $config = require dirname(__DIR__, 2) . '/config/delivery.php';
+        $hours = StoreHours::get();
+        $config['open'] = $hours['open'];
+        $config['close'] = $hours['close'];
+
+        return $config;
+    }
+
+    /** @param array<string, mixed> $query @return array{deliveryType: string, slot: array<string, mixed>} */
+    public static function resolveQuickCheckout(array $query): array
+    {
+        $options = self::options($query);
+        if (($options['orderKind'] ?? '') !== 'quick') {
+            throw new OrderException('This checkout is not a quick order.');
+        }
+        if (!($options['available'] ?? false)) {
+            throw new OrderException((string) ($options['message'] ?: 'Delivery is not available for this address.'));
+        }
+
+        $config = self::deliveryConfig();
+        $now = new DateTimeImmutable('now', new DateTimeZone((string) $config['timezone']));
+
+        return [
+            'deliveryType' => 'express',
+            'slot' => self::defaultQuickSlot($now, $config),
+        ];
+    }
+
+    /** @param array<string, mixed> $config @return array<string, mixed> */
+    private static function defaultQuickSlot(DateTimeImmutable $now, array $config): array
+    {
+        $eta = (int) ($config['etaMinutes']['express'] ?? 90);
+
+        return [
+            'key' => 'quick',
+            'label' => 'Quick delivery',
+            'date' => $now->format('Y-m-d'),
+            'etaMinutes' => $eta,
+            'deliveryType' => 'express',
         ];
     }
 

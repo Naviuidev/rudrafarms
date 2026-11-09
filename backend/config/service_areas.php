@@ -3,44 +3,17 @@
 declare(strict_types=1);
 
 /**
- * First seed for subscription areas. After the admin opens Locations,
- * edits are stored in storage/locations.json and this file is left as the seed.
+ * PIN directory seed (used when a PIN is not listed on an admin zone).
+ * Live zones are edited in Admin → Subscription zones and stored in storage/locations.json.
  */
 return [
     'pins' => [
-        '635109' => ['city' => 'Hosur', 'state' => 'Tamil Nadu', 'latitude' => 12.7409, 'longitude' => 77.8253],
-        '635110' => ['city' => 'Hosur', 'state' => 'Tamil Nadu', 'latitude' => 12.7350, 'longitude' => 77.8200],
-        '635126' => ['city' => 'Hosur', 'state' => 'Tamil Nadu', 'latitude' => 12.7520, 'longitude' => 77.8350],
-        '635101' => ['city' => 'Hosur', 'state' => 'Tamil Nadu', 'latitude' => 12.8488, 'longitude' => 77.8253],
-        '635001' => ['city' => 'Krishnagiri', 'state' => 'Tamil Nadu', 'latitude' => 12.5186, 'longitude' => 78.2137],
-        '560001' => ['city' => 'Bengaluru', 'state' => 'Karnataka', 'latitude' => 12.9716, 'longitude' => 77.5946],
+        '530001' => ['city' => 'Visakhapatnam', 'state' => 'Andhra Pradesh', 'latitude' => 17.6868, 'longitude' => 83.2185],
+        '530002' => ['city' => 'Visakhapatnam', 'state' => 'Andhra Pradesh', 'latitude' => 17.7046, 'longitude' => 83.2976],
+        '530003' => ['city' => 'Visakhapatnam', 'state' => 'Andhra Pradesh', 'latitude' => 17.7218, 'longitude' => 83.2551],
+        '530016' => ['city' => 'Visakhapatnam', 'state' => 'Andhra Pradesh', 'latitude' => 17.7500, 'longitude' => 83.3300],
+        '530020' => ['city' => 'Visakhapatnam', 'state' => 'Andhra Pradesh', 'latitude' => 17.6580, 'longitude' => 83.1880],
+        '531001' => ['city' => 'Visakhapatnam', 'state' => 'Andhra Pradesh', 'latitude' => 17.8333, 'longitude' => 83.4167],
     ],
-    'zones' => [
-        [
-            'id' => 'hosur-core',
-            'name' => 'Hosur core',
-            'quick' => true,
-            'subscription' => true,
-            'polygon' => [
-                [12.79, 77.78],
-                [12.79, 77.88],
-                [12.69, 77.88],
-                [12.69, 77.78],
-            ],
-        ],
-        [
-            'id' => 'hosur-outskirts',
-            'name' => 'Hosur outskirts',
-            'quick' => false,
-            'subscription' => true,
-            'circle' => ['latitude' => 12.7409, 'longitude' => 77.8253, 'radiusKm' => 16],
-        ],
-        [
-            'id' => 'krishnagiri',
-            'name' => 'Krishnagiri',
-            'quick' => true,
-            'subscription' => false,
-            'circle' => ['latitude' => 12.5186, 'longitude' => 78.2137, 'radiusKm' => 6],
-        ],
-    ],
+    'zones' => [],
 ];

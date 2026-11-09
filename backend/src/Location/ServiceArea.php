@@ -6,6 +6,8 @@ namespace App\Location;
 
 final class ServiceArea
 {
+    public const OUTSIDE_SERVICE_MESSAGE = 'We deliver only in Visakhapatnam (Vizag). Choose an address inside our service area.';
+
     /** @param array{pins: array<string, array<string, mixed>>, zones: list<array<string, mixed>>} $config */
     public function __construct(private array $config)
     {
@@ -174,6 +176,55 @@ final class ServiceArea
             'selectedQuickZone' => $selectedQuick,
             'selectedSubscriptionZone' => $selectedSubscription,
         ];
+    }
+
+    /**
+     * checkout — quick delivery: must be inside a zone marked for quick delivery.
+     * subscription — must be inside a zone marked for subscription.
+     * address — inside any store service zone (quick or subscription).
+     *
+     * @return array<string, mixed>
+     */
+    public function checkForPurpose(?float $latitude, ?float $longitude, string $pin, string $purpose): array
+    {
+        $result = $this->check($latitude, $longitude, $pin);
+        $hasPoint = $latitude !== null && $longitude !== null;
+
+        if ($purpose === 'subscription') {
+            $result['allowed'] = $result['subscription'];
+            $result['purpose'] = 'subscription';
+        } elseif ($purpose === 'checkout') {
+            $result['allowed'] = $result['quick'];
+            $result['purpose'] = 'checkout';
+        } else {
+            $result['allowed'] = $result['quick'] || $result['subscription'];
+            $result['purpose'] = 'address';
+        }
+
+        $result['message'] = $result['allowed'] || !$hasPoint
+            ? ''
+            : self::outsideMessage($result, $purpose);
+
+        return $result;
+    }
+
+    /** @param array<string, mixed> $result */
+    public static function outsideMessage(array $result, string $purpose = ''): string
+    {
+        $zones = array_values(array_unique(array_merge(
+            is_array($result['quickZones'] ?? null) ? $result['quickZones'] : [],
+            is_array($result['subscriptionZones'] ?? null) ? $result['subscriptionZones'] : [],
+        )));
+        if ($zones !== []) {
+            $label = implode(', ', $zones);
+
+            return 'This location is outside our delivery area. We currently serve: ' . $label . '.';
+        }
+        if ($purpose === 'subscription') {
+            return self::OUTSIDE_SERVICE_MESSAGE;
+        }
+
+        return self::OUTSIDE_SERVICE_MESSAGE;
     }
 
     /** @param array<string, mixed> $zone */

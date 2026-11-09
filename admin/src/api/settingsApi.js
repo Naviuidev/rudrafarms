@@ -40,6 +40,18 @@ export async function saveStoreHours(open, close) {
   }
 }
 
+export async function setWebsiteOrdersAccepting(accepting) {
+  try {
+    const { data } = await axios.post(`${base}/api/admin/settings.php`, {
+      action: 'set-website-orders',
+      accepting: Boolean(accepting),
+    })
+    return data?.hours || null
+  } catch (error) {
+    fail(error, 'Website orders could not be updated.')
+  }
+}
+
 export async function saveStoreProfile(storeName, supportEmail, minimum) {
   try {
     const { data } = await axios.post(`${base}/api/admin/settings.php`, {

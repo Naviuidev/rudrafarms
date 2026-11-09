@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import Logo from '@brand/components/Logo.jsx'
-import DeliveryLocationMenu from './DeliveryLocationMenu.jsx'
+import DeliveryBar from './DeliveryBar.jsx'
+import LocationSheet from './LocationSheet.jsx'
 import UserAccountMenu from './UserAccountMenu.jsx'
 import { useShop } from '../context/shopContext.js'
 
@@ -15,11 +16,8 @@ export default function StoreHeader({ compact = false }) {
   const { pathname } = useLocation()
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
-  const { count, wishlist } = useShop()
-  const [openPath, setOpenPath] = useState(null)
-  const menuOpen = openPath === pathname
+  const { count, wishlist, locationSheetOpen, closeLocationSheet } = useShop()
   const [scrolled, setScrolled] = useState(false)
-  const navRef = useRef(null)
   const home = pathname === '/'
 
   useEffect(() => {
@@ -53,22 +51,10 @@ export default function StoreHeader({ compact = false }) {
     }
   }, [home, compact])
 
-  useEffect(() => {
-    if (compact) return undefined
-    const apply = () => {
-      const navRow = navRef.current?.querySelector('.nav__row')
-      if (navRow) navRef.current.style.setProperty('--open-height', `${navRow.scrollHeight}px`)
-    }
-    apply()
-    window.addEventListener('resize', apply)
-    return () => window.removeEventListener('resize', apply)
-  }, [compact])
-
   function searchProducts(event) {
     event.preventDefault()
     const term = query.trim()
     navigate(term ? `/shop?q=${encodeURIComponent(term)}` : '/shop')
-    setOpenPath(null)
   }
 
   return (
@@ -76,18 +62,6 @@ export default function StoreHeader({ compact = false }) {
       <header className="header">
         <div className="container header__bar">
           <div className="header__start">
-            {compact ? null : (
-              <button
-                type="button"
-                className="menu-toggle"
-                aria-expanded={menuOpen}
-                aria-controls="primary-nav"
-                onClick={() => setOpenPath(menuOpen ? null : pathname)}
-              >
-                <span className="sr-only">{menuOpen ? 'Close menu' : 'Open menu'}</span>
-                <span aria-hidden="true">{menuOpen ? '×' : '☰'}</span>
-              </button>
-            )}
             <Logo />
           </div>
           <form className="header-search" role="search" onSubmit={searchProducts}>
@@ -95,7 +69,7 @@ export default function StoreHeader({ compact = false }) {
             <input
               id="header-search"
               type="search"
-              placeholder="Search milk, eggs, honey"
+              placeholder="Search products"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
             />
@@ -104,20 +78,19 @@ export default function StoreHeader({ compact = false }) {
             </button>
           </form>
           <div className="header__tools">
-            <DeliveryLocationMenu />
-            <UserAccountMenu />
             <NavLink
               to="/wishlist"
-              className="tool"
+              className="tool header__wish"
               aria-label={`Wishlist, ${wishlist.length} ${wishlist.length === 1 ? 'item' : 'items'}`}
             >
               <HeartIcon />
               <span className="tool__label">Wishlist</span>
               {wishlist.length > 0 ? <span className="tool__count">{wishlist.length}</span> : null}
             </NavLink>
+            <UserAccountMenu className="header__tool--desktop" />
             <NavLink
               to="/cart"
-              className="tool"
+              className="tool header__tool--desktop"
               aria-label={`Cart, ${count} ${count === 1 ? 'item' : 'items'}`}
             >
               <CartIcon />
@@ -126,8 +99,10 @@ export default function StoreHeader({ compact = false }) {
             </NavLink>
           </div>
         </div>
+        {compact ? null : <DeliveryBar />}
+        <LocationSheet open={locationSheetOpen} onClose={closeLocationSheet} />
         {compact ? null : (
-          <nav id="primary-nav" ref={navRef} className={menuOpen ? 'nav nav--open' : 'nav'} aria-label="Primary">
+          <nav id="primary-nav" className="nav nav--desktop" aria-label="Primary">
             <div className="nav__clip">
               <div className="container nav__row">
                 {links.map((link) => (

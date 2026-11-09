@@ -31,6 +31,11 @@ try {
             'hours' => StoreHours::save((string) ($body['open'] ?? ''), (string) ($body['close'] ?? '')),
         ]);
     }
+    if ($action === 'set-website-orders') {
+        Json::send([
+            'hours' => StoreHours::setAcceptingWebsiteOrders((bool) ($body['accepting'] ?? false)),
+        ]);
+    }
     if ($action === 'save-store') {
         Json::send([
             'store' => StoreProfile::save(

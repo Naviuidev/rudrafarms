@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Subscription;
 
 use App\Admin\CouponService;
+use App\Admin\StoreHours;
 use App\Auth\Addresses;
 use App\Auth\Support;
 use App\Database\Connection;
@@ -94,6 +95,9 @@ final class SubscriptionCheckout
     {
         SubscriptionSchema::ensure();
         OrderSchema::ensure();
+        if (!StoreHours::acceptingWebsiteOrders()) {
+            throw new SubscriptionException('The store is closed.');
+        }
 
         $preview = self::quote($customer, $input);
         $customerId = (string) $customer['id'];
@@ -329,6 +333,9 @@ final class SubscriptionCheckout
     {
         SubscriptionSchema::ensure();
         OrderSchema::ensure();
+        if (!StoreHours::acceptingWebsiteOrders()) {
+            throw new SubscriptionException('The store is closed.');
+        }
 
         $customerId = (string) $customer['id'];
         $subscriptionId = trim((string) ($input['subscriptionId'] ?? ''));

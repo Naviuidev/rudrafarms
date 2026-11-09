@@ -9,16 +9,19 @@ import { quoteCart } from '../api/cartApi.js'
 import CartTotals from '../components/CartTotals.jsx'
 import {
   CheckoutError,
-  fetchDeliverySlots,
-  fetchStoreHours,
   payWithRazorpay,
   placeQuickOrder,
   verifyQuickPayment,
 } from '../api/checkoutApi.js'
 import { useShop } from '../context/shopContext.js'
+import { useWebsiteOrdersGate } from '../hooks/useWebsiteOrdersGate.js'
 import { formatPrice } from '../data/catalog.js'
 
-function cartPayload(items, coupon, pricingPoint, subscriptionSchedule, customerId) {
+function hasPricingPoint(point) {
+  return Number.isFinite(point?.latitude) && Number.isFinite(point?.longitude)
+}
+
+function cartPayload(items, coupon, pricingPoint, customerId) {
   return {
     items: items.map((item) => ({
       productId: item.productId,
@@ -31,7 +34,7 @@ function cartPayload(items, coupon, pricingPoint, subscriptionSchedule, customer
     latitude: pricingPoint?.latitude,
     longitude: pricingPoint?.longitude,
     pin: pricingPoint?.pin || '',
-    subscriptionSchedule,
+    subscriptionSchedule: '',
   }
 }
 
@@ -45,7 +48,9 @@ export default function CheckoutPage() {
     authReady,
     items,
     coupon,
+    addresses,
     defaultAddress,
+    deliveringAddressId,
     pricingPoint,
     quote: shopQuote,
     quoteStatus,
@@ -53,19 +58,10 @@ export default function CheckoutPage() {
     setQty,
     clearCoupon,
   } = useShop()
-  const [values, setValues] = useState({
-    subscriptionSchedule: 'morning',
-    slotKey: '',
-    slotDate: '',
-    deliveryType: '',
-    notes: '',
-  })
+  const [notes, setNotes] = useState('')
   const [checkoutQuote, setCheckoutQuote] = useState(null)
   const [quoteBusy, setQuoteBusy] = useState(false)
-  const [slots, setSlots] = useState([])
-  const [slotStatus, setSlotStatus] = useState('idle')
-  const [slotMessage, setSlotMessage] = useState('')
-  const [storeHours, setStoreHours] = useState({ open: '06:00', close: '20:00' })
+  const acceptingWebsiteOrders = useWebsiteOrdersGate()
   const [errors, setErrors] = useState({})
   const [busy, setBusy] = useState(false)
 
@@ -73,8 +69,17 @@ export default function CheckoutPage() {
     () => items.filter((item) => item.deliveryMode !== 'subscription'),
     [items],
   )
+  const deliveryAddress = useMemo(() => {
+    if (defaultAddress) return defaultAddress
+    if (deliveringAddressId) {
+      const active = addresses.find((entry) => entry.id === deliveringAddressId)
+      if (active) return active
+    }
+    return addresses.find((entry) => Number.isFinite(entry.latitude) && Number.isFinite(entry.longitude)) || null
+  }, [addresses, defaultAddress, deliveringAddressId])
   const quote = checkoutQuote || shopQuote
   const lines = quote.items.filter((line) => line.ok)
+
   useEffect(() => {
     if (items.some((item) => item.deliveryMode === 'subscription') && quickItems.length === 0) {
       navigate('/subscriptions', { replace: true })
@@ -82,14 +87,14 @@ export default function CheckoutPage() {
   }, [items, quickItems.length, navigate])
 
   useEffect(() => {
-    if (!defaultAddress || quickItems.length === 0) {
+    if (quickItems.length === 0 || !hasPricingPoint(pricingPoint)) {
       setCheckoutQuote(null)
       return undefined
     }
     let cancel = false
     setQuoteBusy(true)
     const timer = setTimeout(() => {
-      quoteCart(cartPayload(quickItems, coupon, pricingPoint, values.subscriptionSchedule, account?.id)).then((next) => {
+      quoteCart(cartPayload(quickItems, coupon, pricingPoint, account?.id)).then((next) => {
         if (cancel) return
         setCheckoutQuote(next)
         setQuoteBusy(false)
@@ -103,118 +108,25 @@ export default function CheckoutPage() {
       cancel = true
       clearTimeout(timer)
     }
-  }, [quickItems, coupon, pricingPoint, values.subscriptionSchedule, account?.id])
-
-  useEffect(() => {
-    let cancel = false
-    fetchStoreHours()
-      .then((result) => {
-        const hours = result?.hours
-        if (cancel || !hours?.open || !hours?.close) return
-        setStoreHours({ open: hours.open, close: hours.close })
-      })
-      .catch(() => {})
-    return () => {
-      cancel = true
-    }
-  }, [])
-
-  useEffect(() => {
-    if (quickItems.length === 0) {
-      setSlots([])
-      setSlotStatus('idle')
-      return undefined
-    }
-    let cancel = false
-    setSlotStatus('loading')
-    const timer = setTimeout(() => {
-      fetchDeliverySlots({
-        latitude: pricingPoint.latitude,
-        longitude: pricingPoint.longitude,
-        pin: pricingPoint.pin,
-        coupon,
-        customerId: account?.id,
-        subscriptionSchedule: values.subscriptionSchedule,
-        items: quickItems.map((item) => ({
-          productId: item.productId,
-          variantId: item.variantId,
-          qty: item.qty,
-          deliveryMode: 'quick',
-        })),
-      }).then((result) => {
-        if (cancel) return
-        setSlotMessage(result.message || '')
-        if (result.operatingHours?.open && result.operatingHours?.close) {
-          setStoreHours({ open: result.operatingHours.open, close: result.operatingHours.close })
-        }
-        const next = result.slots || []
-        setSlots(next)
-        setSlotStatus(next.length ? 'ready' : 'empty')
-        const first = next[0]
-        if (first) {
-          setValues((current) => ({
-            ...current,
-            slotKey: first.key,
-            slotDate: first.date,
-            deliveryType: first.deliveryType || 'express',
-          }))
-        } else {
-          setValues((current) => ({ ...current, slotKey: '', slotDate: '', deliveryType: '' }))
-        }
-      }).catch((reason) => {
-        if (cancel) return
-        setSlots([])
-        setSlotStatus('error')
-        setSlotMessage(reason instanceof CheckoutError ? reason.message : 'Delivery options could not be loaded.')
-      })
-    }, 200)
-    return () => {
-      cancel = true
-      clearTimeout(timer)
-    }
-  }, [quickItems, coupon, pricingPoint, values.subscriptionSchedule, account?.id])
-
-  const windowGroups = useMemo(() => groupWindows(slots), [slots])
-  const selectedSlot = useMemo(
-    () => slots.find((slot) => slot.key === values.slotKey && slot.date === values.slotDate),
-    [slots, values.slotKey, values.slotDate],
-  )
-
-  function updateNotes(event) {
-    setValues((current) => ({ ...current, notes: event.target.value }))
-  }
-
-  function pickSlot(slot) {
-    setValues((current) => ({
-      ...current,
-      slotKey: slot.key,
-      slotDate: slot.date,
-      deliveryType: slot.deliveryType || 'express',
-    }))
-  }
+  }, [quickItems, coupon, pricingPoint, account?.id])
 
   async function pay(event) {
     event.preventDefault()
     const next = {}
     if (!account) next.auth = 'Sign in to place this order.'
-    if (!defaultAddress) next.address = 'Add a delivery address before checkout.'
+    if (!deliveryAddress?.id) next.address = 'Add a delivery address before checkout.'
+    if (!hasPricingPoint(pricingPoint)) next.address = next.address || 'Set your location (Deliver to) or choose a saved address with a map pin.'
     if (quoteStatus === 'error' && !checkoutQuote) next.cart = quoteError
+    if (!acceptingWebsiteOrders) next.cart = 'The store is closed.'
     if (!quote.serviceable) next.cart = quote.serviceability.message || 'Update the cart before checkout.'
-    if (!values.slotKey || !values.slotDate || !values.deliveryType) {
-      next.slot = slotMessage || 'Choose an available delivery window.'
-    }
     setErrors(next)
     if (Object.keys(next).length) return
 
     setBusy(true)
     try {
       const placed = await placeQuickOrder({
-        addressId: defaultAddress.id,
-        deliveryType: values.deliveryType,
-        subscriptionSchedule: '',
-        slotKey: values.slotKey,
-        slotDate: values.slotDate,
-        notes: values.notes,
+        addressId: deliveryAddress.id,
+        notes,
         coupon,
         customerId: account?.id,
         items: quickItems.map((item) => ({
@@ -246,7 +158,7 @@ export default function CheckoutPage() {
         prefill: {
           name: account.name,
           email: account.email,
-          contact: defaultAddress.contactPhone,
+          contact: deliveryAddress.contactPhone,
         },
       })
       quickItems.forEach((item) => setQty(item.key, 0))
@@ -281,7 +193,11 @@ export default function CheckoutPage() {
     )
   }
 
-  const canPay = Boolean(selectedSlot) && quote.serviceable
+  const canPay = Boolean(deliveryAddress?.id)
+    && hasPricingPoint(pricingPoint)
+    && acceptingWebsiteOrders
+    && quote.serviceable
+    && quote.payable > 0
 
   return (
     <section className="section section--last">
@@ -290,7 +206,7 @@ export default function CheckoutPage() {
         <div className="page-intro">
           <p className="eyebrow">Quick delivery</p>
           <h1>Checkout</h1>
-          <p>Pick an open delivery window. One-time orders follow store hours ({storeHours.open}–{storeHours.close} IST).</p>
+          <p>We deliver as soon as we can. Complete payment below when checkout is open.</p>
         </div>
         <div className="checkout">
           <form className="panel" onSubmit={pay} noValidate>
@@ -299,71 +215,56 @@ export default function CheckoutPage() {
                 {errors.form || errors.auth || errors.address || errors.cart || 'Please check the highlighted fields.'}
               </div>
             ) : null}
-            {defaultAddress ? (
+            {deliveryAddress ? (
               <article className="address-card address-card--default">
                 <p className="eyebrow">Delivery address</p>
-                <h2>{defaultAddress.line1}</h2>
+                <h2>{deliveryAddress.line1}</h2>
                 <p>
-                  {[defaultAddress.line2, defaultAddress.landmark, defaultAddress.city, defaultAddress.state, defaultAddress.pin].filter(Boolean).join(', ')}
+                  {[deliveryAddress.line2, deliveryAddress.landmark, deliveryAddress.city, deliveryAddress.state, deliveryAddress.pin].filter(Boolean).join(', ')}
                 </p>
-                <p>{defaultAddress.contactName} · {defaultAddress.contactPhone}</p>
+                <p>{deliveryAddress.contactName} · {deliveryAddress.contactPhone}</p>
                 <div className="address-card__actions">
-                  <Button variant="outline" to="/addresses">Change address</Button>
+                  <Button variant="outline" to="/account?tab=addresses">Change address</Button>
                 </div>
               </article>
             ) : (
               <EmptyState
                 title="Add a delivery address"
-                message="Add the address this order should go to."
+                message={hasPricingPoint(pricingPoint)
+                  ? 'Quick location is set in the header, but checkout needs a saved address with name and phone.'
+                  : 'Add an address with a map pin, or set Deliver to in the header.'}
                 action={<Button to="/addresses/new" state={{ from: returnFrom }}>Add address</Button>}
               />
             )}
+            {!hasPricingPoint(pricingPoint) ? (
+              <p className="cart-note" role="status">
+                Set <strong>Deliver to</strong> in the header (saved address, GPS, or PIN) so we can check delivery and open payment.
+              </p>
+            ) : null}
             {authReady && !account ? (
               <div className="form-alert">
-                Sign in to pay for this order. The delivery windows below are open now.
+                Sign in to pay for this order.
                 {' '}
                 <Button variant="outline" to="/login" state={{ from: returnFrom }}>Sign in</Button>
               </div>
             ) : null}
-            <div className="slot-list">
-              <h2>Delivery window</h2>
-              {slotStatus === 'loading' ? <p role="status">Checking open windows…</p> : null}
-              {slotStatus !== 'loading' && slots.length === 0 ? (
-                <p className="cart-note" role="status">{slotMessage || 'No delivery windows are open right now.'}</p>
-              ) : null}
-              {slotStatus !== 'loading' && slots.length > 0 && slotMessage ? (
-                <p className="cart-note">{slotMessage}</p>
-              ) : null}
-              {errors.slot ? <p className="field__error" role="alert">{errors.slot}</p> : null}
-              {windowGroups.map((group) => (
-                <div key={group.date} className="slot-day">
-                  <p className="slot-day__label">{windowDateLabel(group.date)}</p>
-                  <ul className="slot-list__items">
-                    {group.slots.map((slot) => (
-                      <li key={`${slot.key}:${slot.date}`}>
-                        <button
-                          type="button"
-                          className={values.slotKey === slot.key && values.slotDate === slot.date ? 'slot-card slot-card--active' : 'slot-card'}
-                          onClick={() => pickSlot(slot)}
-                        >
-                          <strong>{slot.label}</strong>
-                          <span>{windowKind(slot.deliveryType)}</span>
-                          {slot.etaMinutes ? <span>ETA ~{slot.etaMinutes} min</span> : null}
-                          {slot.remaining != null ? <span>{slot.remaining} spots left</span> : null}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-            <TextField id="checkout-notes" name="notes" label="Delivery note" hint="Optional. A gate code helps the drop." multiline value={values.notes} onChange={updateNotes} />
-            <Button type="submit" disabled={busy || quoteBusy || !defaultAddress || !canPay}>
-              {busy ? 'Processing…' : `Pay ${formatPrice(quote.payable)}`}
+            <TextField id="checkout-notes" name="notes" label="Delivery note" hint="Optional. A gate code helps the drop." multiline value={notes} onChange={(event) => setNotes(event.target.value)} />
+            <Button type="submit" disabled={busy || quoteBusy || !canPay}>
+              {busy
+                ? 'Processing…'
+                : !acceptingWebsiteOrders
+                  ? 'Store is closed'
+                  : `Pay ${formatPrice(quote.payable)}`}
             </Button>
             {!canPay && quote.payable > 0 ? (
-              <p className="summary__note">
-                Pick an open delivery window to continue to payment.
+              <p className="summary__note" role="status">
+                {!acceptingWebsiteOrders
+                  ? 'The store is closed. Try again when we open checkout.'
+                  : !deliveryAddress?.id
+                    ? 'Add a saved delivery address to pay.'
+                    : !quote.serviceable
+                      ? (quote.serviceability?.message || 'This order cannot be delivered to the current location.')
+                      : 'Complete the steps above to pay.'}
               </p>
             ) : null}
           </form>
@@ -389,43 +290,4 @@ export default function CheckoutPage() {
       </div>
     </section>
   )
-}
-
-function groupWindows(slots) {
-  const groups = []
-  const index = new Map()
-  slots.forEach((slot) => {
-    const date = slot.date || ''
-    if (!index.has(date)) {
-      index.set(date, groups.length)
-      groups.push({ date, slots: [] })
-    }
-    groups[index.get(date)].slots.push(slot)
-  })
-  return groups
-}
-
-function windowDateLabel(date) {
-  const today = new Date()
-  const key = dateKey(today)
-  const tomorrow = new Date(today)
-  tomorrow.setDate(today.getDate() + 1)
-  if (date === key) return 'Today'
-  if (date === dateKey(tomorrow)) return 'Tomorrow'
-  const parsed = new Date(`${date}T00:00:00`)
-  if (Number.isNaN(parsed.getTime())) return date
-  return parsed.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' })
-}
-
-function dateKey(value) {
-  const month = String(value.getMonth() + 1).padStart(2, '0')
-  const day = String(value.getDate()).padStart(2, '0')
-  return `${value.getFullYear()}-${month}-${day}`
-}
-
-function windowKind(type) {
-  if (type === 'express') return 'Express'
-  if (type === 'same-day') return 'Same day'
-  if (type === 'scheduled') return 'Scheduled'
-  return 'Delivery window'
 }

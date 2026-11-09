@@ -17,7 +17,7 @@ const pinIcon = L.icon({
 
 const fallback = [12.7409, 77.8253]
 
-export default function LocationMap({ latitude, longitude, onPick }) {
+export default function LocationMap({ latitude, longitude, onPick, compact = false }) {
   const nodeRef = useRef(null)
   const mapRef = useRef(null)
   const markerRef = useRef(null)
@@ -62,18 +62,20 @@ export default function LocationMap({ latitude, longitude, onPick }) {
   }, [latitude, longitude])
 
   return (
-    <div className="map-panel">
+    <div className={compact ? 'map-panel map-panel--compact' : 'map-panel'}>
       <div
         ref={nodeRef}
         className="map-panel__canvas"
         role="application"
         aria-label="Map. Click the map or drag the pin to set the delivery point."
       />
-      <p>
-        {latitude == null
-          ? 'Click the map to drop a pin.'
-          : `Map point ${latitude.toFixed(5)}, ${longitude.toFixed(5)}.`}
-      </p>
+      {compact ? null : (
+        <p>
+          {latitude == null
+            ? 'Click the map to drop a pin.'
+            : `Map point ${latitude.toFixed(5)}, ${longitude.toFixed(5)}.`}
+        </p>
+      )}
     </div>
   )
 }

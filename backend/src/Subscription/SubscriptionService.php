@@ -202,7 +202,7 @@ final class SubscriptionService
         $lng = (float) $presentedAddress['longitude'];
         $check = ServiceArea::load()->check($lat, $lng, (string) ($presentedAddress['pin'] ?? ''));
         if (empty($check['subscription'])) {
-            throw new SubscriptionException('Subscription delivery is not available for this address.');
+            throw new SubscriptionException(ServiceArea::outsideMessage($check, 'subscription'));
         }
     }
 

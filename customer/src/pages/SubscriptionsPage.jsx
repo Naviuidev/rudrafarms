@@ -13,11 +13,13 @@ import {
   startSubscription,
 } from '../api/subscriptionApi.js'
 import { payWithRazorpay, verifyQuickPayment } from '../api/checkoutApi.js'
+import ManagedSubscriptionRow from '../components/ManagedSubscriptionRow.jsx'
 import ProductCard from '../components/ProductCard.jsx'
 import ServiceabilityStatus from '../components/ServiceabilityStatus.jsx'
 import { useCatalog } from '../context/catalogContext.js'
 import { useShop } from '../context/shopContext.js'
 import { formatPrice } from '../data/catalog.js'
+import { useWebsiteOrdersGate } from '../hooks/useWebsiteOrdersGate.js'
 import { useServiceCheck } from '../useServiceCheck.js'
 
 function todayIso() {
@@ -54,6 +56,8 @@ export default function SubscriptionsPage() {
 
   const [payBusy, setPayBusy] = useState(false)
   const [payError, setPayError] = useState('')
+  const acceptingWebsiteOrders = useWebsiteOrdersGate()
+  const [managedSubId, setManagedSubId] = useState('')
 
   const { service, checking, error: checkError } = useServiceCheck(defaultAddress, 'subscription')
   const outsideArea = Boolean(service && !service.subscription)
@@ -78,7 +82,9 @@ export default function SubscriptionsPage() {
 
   const picked = customLines.length > 0
   const planRef = useRef(null)
+  const summaryRef = useRef(null)
   const wasPicked = useRef(false)
+  const scrollToQuoteAfter = useRef(false)
 
   useEffect(() => {
     if (!picked) {
@@ -97,6 +103,26 @@ export default function SubscriptionsPage() {
     })
     return () => cancelAnimationFrame(frame)
   }, [picked])
+
+  useEffect(() => {
+    if (!quote || !scrollToQuoteAfter.current) return undefined
+    scrollToQuoteAfter.current = false
+    let outer = 0
+    let inner = 0
+    outer = requestAnimationFrame(() => {
+      inner = requestAnimationFrame(() => {
+        const node = summaryRef.current
+        if (!node) return
+        node.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        const bill = node.querySelector('.sub-bill')
+        bill?.focus({ preventScroll: true })
+      })
+    })
+    return () => {
+      cancelAnimationFrame(outer)
+      cancelAnimationFrame(inner)
+    }
+  }, [quote])
 
   const loadCatalog = useCallback(() => {
     if (!account) return
@@ -196,6 +222,7 @@ export default function SubscriptionsPage() {
         body.lines = customLines
       }
       const result = await quoteSubscription(body)
+      scrollToQuoteAfter.current = true
       setQuote(result)
     } catch (reason) {
       setQuoteError(reason instanceof SubscriptionApiError ? reason.message : 'Quote failed.')
@@ -206,6 +233,10 @@ export default function SubscriptionsPage() {
 
   async function pay() {
     setPayError('')
+    if (!acceptingWebsiteOrders) {
+      setPayError('The store is closed.')
+      return
+    }
     if (!quote || !defaultAddress || !account) {
       setPayError('Get a quote first.')
       return
@@ -265,7 +296,11 @@ export default function SubscriptionsPage() {
       : checking
         ? { message: 'Checking whether this address is inside a subscription delivery area.' }
         : (outsideArea || checkError)
-          ? { message: 'This address is outside the subscription area. Add an address in a delivery location.' }
+          ? {
+            message: service?.subscriptionZones?.length
+              ? `This address is outside subscription delivery. The store currently serves: ${service.subscriptionZones.join(', ')}.`
+              : 'This address is outside our Vizag service area. Add a delivery address in Visakhapatnam.',
+          }
           : null
 
   if (!authReady) {
@@ -278,13 +313,13 @@ export default function SubscriptionsPage() {
   }
 
   return (
-    <section className="section subs-page">
+    <section className={`section subs-page${picked ? ' subs-page--checkout' : ''}`}>
       <DocumentTitle title="Subscriptions" />
       {addressPrompt ? createPortal(
         <div className="address-pop" role="status">
           <p>{addressPrompt.message}</p>
           {defaultAddress && checking ? null : (
-            <Link to="/addresses/new" state={{ from: `${place.pathname}${place.search}` }}>Add address</Link>
+            <Link to="/addresses/new" state={{ from: `${place.pathname}${place.search}`, purpose: 'subscription' }}>Add subscription address</Link>
           )}
         </div>,
         document.body,
@@ -338,17 +373,17 @@ export default function SubscriptionsPage() {
         </section>
 
         {mySubscriptions.filter((sub) => sub.status !== 'cancelled' && sub.status !== 'pending_payment').length > 0 ? (
-          <div className="panel" style={{ marginBottom: '1.5rem' }}>
+          <div className="panel subs-your" style={{ marginBottom: '1.5rem' }}>
             <h2 className="subs-label">Your subscriptions</h2>
-            <ul className="subs-list">
+            <ul className="subs-list subs-list--manage">
               {mySubscriptions.filter((sub) => sub.status !== 'cancelled' && sub.status !== 'pending_payment').map((sub) => (
-                <li key={sub.id} className="subs-row subs-row--manage">
-                  <div>
-                    <strong>{sub.statusLabel}</strong>
-                    <p className="subs-muted">Started {sub.startDate} · {sub.scheduleKey} drop</p>
-                  </div>
-                  <Button variant="outline" to={`/subscriptions/${sub.id}`}>Manage</Button>
-                </li>
+                <ManagedSubscriptionRow
+                  key={sub.id}
+                  sub={sub}
+                  open={managedSubId === sub.id}
+                  onToggle={() => setManagedSubId((current) => (current === sub.id ? '' : sub.id))}
+                  onSubscriptionChange={() => loadCatalog()}
+                />
               ))}
             </ul>
           </div>
@@ -444,7 +479,7 @@ export default function SubscriptionsPage() {
             </div>
           </div>
 
-          <aside className="summary sub-summary">
+          <aside className="summary sub-summary" ref={summaryRef}>
             <h2 className="sub-summary__title">Billing</h2>
             <p className="subs-muted subs-muted--small">
               Amount covers every calendar day in the first month from your start date, at your per-day quantities (Sundays included). Pauses and skips can adjust later cycles.
@@ -462,7 +497,7 @@ export default function SubscriptionsPage() {
             )}
 
             {quote ? (
-              <div className="sub-bill">
+              <div className="sub-bill" tabIndex={-1}>
                 <div className="sub-bill__row">
                   <span>Billable delivery days</span>
                   <strong>{quote.billableDeliveryDays}</strong>
@@ -493,20 +528,40 @@ export default function SubscriptionsPage() {
               </div>
             ) : null}
 
-            {outsideArea ? <p className="field__error" role="status">This address is outside the subscription area.</p> : null}
+            {outsideArea ? (
+              <p className="field__error" role="status">
+                {service?.subscriptionZones?.length
+                  ? `Outside subscription areas. Served zones: ${service.subscriptionZones.join(', ')}.`
+                  : 'This address is outside our Vizag service area.'}
+              </p>
+            ) : null}
             {quoteError ? <p className="field__error" role="alert">{quoteError}</p> : null}
             {payError ? <p className="field__error" role="alert">{payError}</p> : null}
+            {!acceptingWebsiteOrders ? (
+              <p className="cart-note" role="status">The store is closed. You can still calculate your bill; payment opens when checkout is on.</p>
+            ) : null}
 
             {!account ? (
               <Button to="/login" state={{ from: '/subscriptions' }}>Sign in to start</Button>
             ) : (
               <>
-            <Button className="sub-cta" type="button" onClick={runQuote} disabled={quoteBusy || checking || !defaultAddress || outsideArea}>
-              {quoteBusy ? 'Calculating…' : 'Calculate first month'}
-            </Button>
-            <Button className="sub-cta" type="button" onClick={pay} disabled={payBusy || !quote || !defaultAddress || outsideArea}>
-              {payBusy ? 'Waiting for the UPI payment…' : (quote ? `Pay ${formatPrice(quote.payable)}` : 'Pay')}
-            </Button>
+            <div className="sub-summary__actions" role="toolbar" aria-label="Subscription checkout">
+              <Button className="sub-cta" type="button" onClick={runQuote} disabled={quoteBusy || checking || !defaultAddress || outsideArea}>
+                {quoteBusy ? 'Calculating…' : 'Calculate first month'}
+              </Button>
+              <Button
+                className="sub-cta"
+                type="button"
+                onClick={pay}
+                disabled={payBusy || !acceptingWebsiteOrders || !quote || !defaultAddress || outsideArea}
+              >
+                {payBusy
+                  ? 'Waiting for the UPI payment…'
+                  : !acceptingWebsiteOrders
+                    ? 'Store is closed'
+                    : (quote ? `Pay ${formatPrice(quote.payable)}` : 'Pay')}
+              </Button>
+            </div>
             {paymentSandbox ? (
               <p className="subs-muted subs-muted--small">
                 PhonePe and Google Pay show “Unable to verify the QR code” on this test QR. In the Razorpay window, pay with the UPI ID success@razorpay. A live key under Config payment is what makes a phone scan work.

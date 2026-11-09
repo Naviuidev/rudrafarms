@@ -1,7 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { blankQuote, quoteCart } from '../api/cartApi.js'
+import { patchQuoteForItems } from '../lib/quoteDisplay.js'
 import { changeWishlist, fetchWishlist } from '../api/catalogApi.js'
-import { checkServiceability, fetchServiceLocations } from '../api/locationApi.js'
+import { checkServiceability, fetchServiceLocations, resolveLocation } from '../api/locationApi.js'
+import { loadDeliveryMode, loadDeliveryPoint, saveDeliveryMode, saveDeliveryPoint } from '../lib/deliveryPoint.js'
 import { pointFromServiceLocation } from '../lib/locationPoint.js'
 import {
   authToken,
@@ -130,6 +132,70 @@ export default function ShopProvider({ children }) {
     () => localStorage.getItem(DELIVERY_LOCATION_KEY) || '',
   )
   const [locationsReady, setLocationsReady] = useState(false)
+  const [deliveryPoint, setDeliveryPointState] = useState(loadDeliveryPoint)
+  const [deliveryMode, setDeliveryModeState] = useState(loadDeliveryMode)
+  const [locationSheetOpen, setLocationSheetOpen] = useState(false)
+
+  const setDeliveryPoint = useCallback((point, { mode = 'quick' } = {}) => {
+    if (!point) {
+      saveDeliveryPoint(null)
+      setDeliveryPointState(null)
+      return
+    }
+    const next = {
+      latitude: Number(point.latitude),
+      longitude: Number(point.longitude),
+      pin: typeof point.pin === 'string' ? point.pin : '',
+      label: typeof point.label === 'string' ? point.label : '',
+    }
+    saveDeliveryPoint(next)
+    setDeliveryPointState(next)
+    saveDeliveryMode(mode)
+    setDeliveryModeState(mode)
+  }, [])
+
+  const openLocationSheet = useCallback(() => setLocationSheetOpen(true), [])
+  const closeLocationSheet = useCallback(() => setLocationSheetOpen(false), [])
+
+  const applyDeliveryFromGps = useCallback(() => new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error('Allow location in the browser, or enter a PIN code.'))
+      return
+    }
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const resolved = await resolveLocation({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          })
+          if (!resolved?.found) {
+            reject(new Error(resolved?.message || 'Could not place this location.'))
+            return
+          }
+          const service = await checkServiceability(
+            { latitude: resolved.latitude, longitude: resolved.longitude, pin: resolved.pin || '' },
+            'checkout',
+          )
+          if (!service.allowed) {
+            reject(new Error(service.message || 'We deliver only in Visakhapatnam (Vizag).'))
+            return
+          }
+          const label = [resolved.city, resolved.pin].filter(Boolean).join(', ')
+          setDeliveryPoint({
+            latitude: resolved.latitude,
+            longitude: resolved.longitude,
+            pin: resolved.pin || '',
+            label,
+          })
+          resolve()
+        } catch (reason) {
+          reject(reason instanceof Error ? reason : new Error('Could not use your location.'))
+        }
+      },
+      () => reject(new Error('Location permission is needed, or enter a PIN code.')),
+    )
+  }), [setDeliveryPoint])
 
   useEffect(() => {
     let cancel = false
@@ -179,18 +245,78 @@ export default function ShopProvider({ children }) {
   const defaultAddress = addresses.find((item) => item.isDefault) || null
   const deliveryLocation = serviceLocations.find((entry) => entry.id === deliveryLocationId) || null
   const pricingPoint = useMemo(() => {
-    const fromLocation = pointFromServiceLocation(deliveryLocation)
-    if (fromLocation) return fromLocation
-    if (defaultAddress) {
+    if (
+      deliveryMode === 'saved'
+      && defaultAddress
+      && Number.isFinite(defaultAddress.latitude)
+      && Number.isFinite(defaultAddress.longitude)
+    ) {
       return {
         latitude: defaultAddress.latitude,
         longitude: defaultAddress.longitude,
         pin: defaultAddress.pin,
       }
     }
+    if (deliveryPoint) {
+      return {
+        latitude: deliveryPoint.latitude,
+        longitude: deliveryPoint.longitude,
+        pin: deliveryPoint.pin || '',
+      }
+    }
+    if (defaultAddress && Number.isFinite(defaultAddress.latitude) && Number.isFinite(defaultAddress.longitude)) {
+      return {
+        latitude: defaultAddress.latitude,
+        longitude: defaultAddress.longitude,
+        pin: defaultAddress.pin,
+      }
+    }
+    const fromLocation = pointFromServiceLocation(deliveryLocation)
+    if (fromLocation) return fromLocation
     return { latitude: undefined, longitude: undefined, pin: '' }
-  }, [deliveryLocation, defaultAddress])
+  }, [deliveryLocation, defaultAddress, deliveryPoint, deliveryMode])
+
+  const deliverySummary = useMemo(() => {
+    if (deliveryMode === 'saved' && defaultAddress?.line1) {
+      const primary = [defaultAddress.city, defaultAddress.pin].filter(Boolean).join(', ') || 'Saved address'
+      return { primary, secondary: defaultAddress.line1, mode: 'saved' }
+    }
+    if (deliveryPoint?.label) {
+      return {
+        primary: deliveryPoint.label,
+        secondary: deliveryPoint.pin ? `PIN ${deliveryPoint.pin}` : '',
+        mode: 'quick',
+      }
+    }
+    if (defaultAddress?.line1) {
+      const primary = [defaultAddress.city, defaultAddress.pin].filter(Boolean).join(', ') || 'Saved address'
+      return { primary, secondary: defaultAddress.line1, mode: 'saved' }
+    }
+    if (deliveryLocation) {
+      return {
+        primary: deliveryLocation.name,
+        secondary: [deliveryLocation.city, deliveryLocation.state].filter(Boolean).join(', '),
+        mode: 'zone',
+      }
+    }
+    return { primary: 'Set delivery location', secondary: 'Saved address, GPS or PIN', mode: 'empty' }
+  }, [defaultAddress, deliveryPoint, deliveryLocation, deliveryMode])
+
+  const hasDeliverySet = Boolean(
+    (deliveryMode === 'saved' && defaultAddress && Number.isFinite(defaultAddress.latitude))
+    || deliveryPoint,
+  )
+
+  const deliveringAddressId = deliveryMode === 'saved' ? (defaultAddress?.id || '') : ''
   const quotedPrices = useRef({})
+  const pricingLat = pricingPoint.latitude
+  const pricingLng = pricingPoint.longitude
+  const pricingPin = pricingPoint.pin || ''
+
+  const liveQuote = useMemo(
+    () => (items.length === 0 ? quote : patchQuoteForItems(quote, items)),
+    [items, quote],
+  )
 
   useEffect(() => {
     localStorage.setItem(CART_KEY, JSON.stringify(items.map(({ productId, variantId, qty, deliveryMode }) => ({
@@ -220,11 +346,25 @@ export default function ShopProvider({ children }) {
         })),
         coupon,
         ...(account?.id ? { customerId: account.id } : {}),
-        latitude: pricingPoint.latitude,
-        longitude: pricingPoint.longitude,
-        pin: pricingPoint.pin || '',
+        latitude: pricingLat,
+        longitude: pricingLng,
+        pin: pricingPin,
       }).then((next) => {
         if (cancel) return
+        const subsOnlyError = 'This product is for a subscription, not a day-to-day order.'
+        const onlySubscription = next.items.length > 0
+          && next.items.every((line) => !line.ok && line.message === subsOnlyError)
+        if (onlySubscription && items.some((item) => item.deliveryMode === 'quick')) {
+          setItems((current) => current.map((item) => {
+            if (item.deliveryMode !== 'quick') return item
+            return {
+              ...item,
+              deliveryMode: 'subscription',
+              key: `${item.productId}:${item.variantId}:subscription`,
+            }
+          }))
+          return
+        }
         for (const line of next.items) quotedPrices.current[line.key] = line.price
         setQuote(next)
         setQuoteError('')
@@ -239,7 +379,7 @@ export default function ShopProvider({ children }) {
       cancel = true
       clearTimeout(timer)
     }
-  }, [items, coupon, pricingPoint, account?.id])
+  }, [items, coupon, pricingLat, pricingLng, pricingPin, account?.id])
 
   function setDeliveryLocation(id) {
     setDeliveryLocationId(id)
@@ -347,6 +487,17 @@ export default function ShopProvider({ children }) {
       const current = addresses.find((item) => item.id === id)
       if (!current) return
       const serviceability = await checkServiceability(current, 'address')
+      saveDeliveryMode('saved')
+      setDeliveryModeState('saved')
+      if (Number.isFinite(current.latitude) && Number.isFinite(current.longitude)) {
+        const label = [current.city, current.pin].filter(Boolean).join(', ')
+        setDeliveryPoint({
+          latitude: current.latitude,
+          longitude: current.longitude,
+          pin: current.pin,
+          label: label || current.line1,
+        }, { mode: 'saved' })
+      }
       if (account) {
         const saved = await defaultAccountAddress(id)
         setAddresses(normalize((saved.addresses || []).map((item) => (
@@ -421,7 +572,7 @@ export default function ShopProvider({ children }) {
       coupon,
       applyCoupon,
       clearCoupon,
-      quote: items.length === 0 ? blankQuote() : quote,
+      quote: items.length === 0 ? blankQuote() : liveQuote,
       quoteStatus: items.length === 0 ? 'ready' : quoteStatus,
       quoteError,
       wishlist,
@@ -429,10 +580,20 @@ export default function ShopProvider({ children }) {
       addresses,
       defaultAddress,
       deliveryLocation,
+      deliveryPoint,
+      deliveryMode,
+      deliveringAddressId,
+      deliverySummary,
+      hasDeliverySet,
       serviceLocations,
       locationsReady,
       setDeliveryLocation,
+      setDeliveryPoint,
+      applyDeliveryFromGps,
       pricingPoint,
+      locationSheetOpen,
+      openLocationSheet,
+      closeLocationSheet,
       saveAddress,
       setDefaultAddress,
       deleteAddress,
@@ -445,7 +606,32 @@ export default function ShopProvider({ children }) {
       updateProfile,
       changePassword,
     }
-  }, [items, coupon, quote, quoteStatus, quoteError, wishlist, addresses, account, authReady, defaultAddress, deliveryLocation, serviceLocations, locationsReady, pricingPoint])
+  }, [
+    items,
+    coupon,
+    liveQuote,
+    quoteStatus,
+    quoteError,
+    wishlist,
+    addresses,
+    account,
+    authReady,
+    defaultAddress,
+    deliveryLocation,
+    deliveryPoint,
+    deliveryMode,
+    deliveringAddressId,
+    deliverySummary,
+    hasDeliverySet,
+    serviceLocations,
+    locationsReady,
+    pricingPoint,
+    locationSheetOpen,
+    setDeliveryPoint,
+    applyDeliveryFromGps,
+    openLocationSheet,
+    closeLocationSheet,
+  ])
 
   return <ShopContext.Provider value={value}>{children}</ShopContext.Provider>
 }

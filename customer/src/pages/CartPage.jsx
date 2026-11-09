@@ -7,6 +7,7 @@ import { TextField } from '@brand/components/TextField.jsx'
 import CartTotals from '../components/CartTotals.jsx'
 import QuantityStepper from '../components/QuantityStepper.jsx'
 import { useShop } from '../context/shopContext.js'
+import { useWebsiteOrdersGate } from '../hooks/useWebsiteOrdersGate.js'
 import { formatPrice } from '../data/catalog.js'
 
 export default function CartPage() {
@@ -23,7 +24,9 @@ export default function CartPage() {
     defaultAddress,
   } = useShop()
   const [code, setCode] = useState(coupon)
+  const acceptingWebsiteOrders = useWebsiteOrdersGate()
   const quoted = Object.fromEntries(quote.items.map((line) => [line.key, line]))
+  const quickItems = items.filter((item) => item.deliveryMode !== 'subscription')
 
   return (
     <section className="section account-page">
@@ -64,7 +67,9 @@ export default function CartPage() {
                       label={`${line?.name || 'Item'} quantity`}
                       onChange={(qty) => setQty(item.key, qty)}
                     />
-                    <strong>{line?.ok ? formatPrice(line.price * item.qty) : '—'}</strong>
+                    <strong>
+                      {line?.price > 0 ? formatPrice(line.price * item.qty) : '—'}
+                    </strong>
                   </li>
                 )
               })}
@@ -91,10 +96,18 @@ export default function CartPage() {
                   Remove coupon
                 </button>
               ) : null}
-              <p>{quote.serviceability.message || (defaultAddress ? '' : 'Add a delivery address before checkout.')}</p>
-              <Button to={defaultAddress ? '/checkout' : '/addresses/new'} state={defaultAddress ? undefined : { from: `${place.pathname}${place.search}` }}>
-                {defaultAddress ? 'Continue to checkout' : 'Add a delivery address'}
-              </Button>
+              <p>
+                {!acceptingWebsiteOrders && quickItems.length > 0
+                  ? 'The store is closed. You can still review your cart; payment opens when checkout is on.'
+                  : (quote.serviceability.message || (defaultAddress ? '' : 'Add a delivery address before checkout.'))}
+              </p>
+              {defaultAddress && quickItems.length > 0 && !acceptingWebsiteOrders ? (
+                <Button type="button" disabled>Store is closed</Button>
+              ) : (
+                <Button to={defaultAddress ? '/checkout' : '/addresses/new'} state={defaultAddress ? undefined : { from: `${place.pathname}${place.search}` }}>
+                  {defaultAddress ? 'Continue to checkout' : 'Add a delivery address'}
+                </Button>
+              )}
             </aside>
           </div>
         )}

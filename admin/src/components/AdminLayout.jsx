@@ -6,6 +6,7 @@ import { developerSection, developerSections } from '../developer/sections.js'
 import { orderSection, orderSections } from '../orders/sections.js'
 import { settingsSection, settingsSections } from '../settings/sections.js'
 import { websiteSection, websiteSections } from '../website/sections.js'
+import { setWebsiteOrdersAccepting, fetchSettings } from '../api/settingsApi.js'
 import { signOutAdmin } from '../auth/session.js'
 
 const sections = [
@@ -42,7 +43,7 @@ const sections = [
     label: 'Operations',
     links: [
       { to: '/deliveries', label: 'Deliveries', Icon: IconTruck },
-      { to: '/locations', label: 'Service zones', Icon: IconPin },
+      { to: '/locations', label: 'Subscription zones', Icon: IconPin },
     ],
   },
   {
@@ -65,6 +66,8 @@ export default function AdminLayout() {
   const onWebsite = location.pathname === '/website'
   const onOrder = /^\/orders\/[^/]+$/.test(location.pathname)
   const onSettings = location.pathname === '/settings'
+  const [acceptingWebsiteOrders, setAcceptingWebsiteOrders] = useState(true)
+  const [ordersToggleBusy, setOrdersToggleBusy] = useState(false)
   const onDeveloper = location.pathname === '/developer'
   const section = deliverySection(params.get('section'))
   const siteSection = websiteSection(params.get('section'))
@@ -76,6 +79,33 @@ export default function AdminLayout() {
     const id = window.setInterval(() => setClock(timeLabel()), 30000)
     return () => window.clearInterval(id)
   }, [])
+
+  useEffect(() => {
+    let cancel = false
+    fetchSettings()
+      .then((settings) => {
+        if (cancel) return
+        setAcceptingWebsiteOrders(settings?.hours?.acceptingWebsiteOrders !== false)
+      })
+      .catch(() => {})
+    return () => {
+      cancel = true
+    }
+  }, [])
+
+  async function toggleWebsiteOrders() {
+    if (ordersToggleBusy) return
+    const next = !acceptingWebsiteOrders
+    setOrdersToggleBusy(true)
+    try {
+      const hours = await setWebsiteOrdersAccepting(next)
+      setAcceptingWebsiteOrders(hours?.acceptingWebsiteOrders !== false)
+    } catch {
+      // Keep the previous value when the save fails.
+    } finally {
+      setOrdersToggleBusy(false)
+    }
+  }
 
   useEffect(() => {
     if (!railOpen) return undefined
@@ -213,6 +243,28 @@ export default function AdminLayout() {
           </button>
           <p className="topbar__title">Rudras Farm Fresh</p>
           <span className="topbar__live" title="Lists refresh about every 15 seconds">Live · {clock}</span>
+          <div className="topbar__orders-toggle">
+            <span className="topbar__orders-label" id="topbar-website-orders-label">
+              Website orders
+            </span>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={acceptingWebsiteOrders}
+              aria-labelledby="topbar-website-orders-label"
+              className={acceptingWebsiteOrders ? 'topbar__switch topbar__switch--on' : 'topbar__switch'}
+              disabled={ordersToggleBusy}
+              title={acceptingWebsiteOrders ? 'Checkout open on the website' : 'Checkout closed on the website'}
+              onClick={toggleWebsiteOrders}
+            >
+              <span className="sr-only">
+                {ordersToggleBusy ? 'Saving' : acceptingWebsiteOrders ? 'On' : 'Off'}
+              </span>
+              <span className="topbar__switch-track" aria-hidden="true">
+                <span className="topbar__switch-knob" />
+              </span>
+            </button>
+          </div>
           <button
             type="button"
             className="topbar__account"

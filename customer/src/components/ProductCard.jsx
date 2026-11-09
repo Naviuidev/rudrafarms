@@ -69,39 +69,6 @@ export default function ProductCard({ product, onAdd, qty = 0, maxQty = 12, onQt
             ) : null}
           </Link>
         )}
-        <button
-          type="button"
-          className={saved ? 'product-card__wish product-card__wish--saved' : 'product-card__wish'}
-          aria-pressed={saved}
-          aria-label={saved ? `Remove ${product.name} from wishlist` : `Save ${product.name} to wishlist`}
-          disabled={savingWish}
-          onClick={(event) => {
-            event.stopPropagation()
-            onWish()
-          }}
-        >
-          <span aria-hidden="true">{saved ? '♥' : '♡'}</span>
-        </button>
-        {onQty ? (
-          <QuantityStepper
-            className="stepper--card"
-            value={qty}
-            min={0}
-            max={Math.max(qty, maxQty)}
-            label={`${product.name} quantity`}
-            onChange={onQty}
-            onClick={(event) => event.stopPropagation()}
-          />
-        ) : (
-          <button
-            type="button"
-            className="product-card__add"
-            disabled={!purchasable}
-            onClick={() => onAdd(product)}
-          >
-            {purchasable ? 'ADD' : 'Out'}
-          </button>
-        )}
       </div>
       <div className="product-card__body">
         <p className="product-card__unit">{product.unit}</p>
@@ -119,6 +86,66 @@ export default function ProductCard({ product, onAdd, qty = 0, maxQty = 12, onQt
         </p>
         {note ? <p className="product-card__note">{note}</p> : null}
       </div>
+      <div className="product-card__actions">
+        <button
+          type="button"
+          className={saved ? 'product-card__wish product-card__wish--saved' : 'product-card__wish'}
+          aria-pressed={saved}
+          aria-label={saved ? `Remove ${product.name} from wishlist` : `Save ${product.name} to wishlist`}
+          disabled={savingWish}
+          onClick={(event) => {
+            event.stopPropagation()
+            onWish()
+          }}
+        >
+          <HeartGlyph filled={saved} />
+        </button>
+        {onQty ? (
+          <QuantityStepper
+            className="stepper--card"
+            value={qty}
+            min={0}
+            max={Math.max(qty, maxQty)}
+            label={`${product.name} quantity`}
+            onChange={onQty}
+            onClick={(event) => event.stopPropagation()}
+          />
+        ) : (
+          <button
+            type="button"
+            className="product-card__add"
+            disabled={!purchasable}
+            onClick={(event) => {
+              event.stopPropagation()
+              onAdd(product)
+            }}
+          >
+            <span className="product-card__add-label">{purchasable ? 'ADD' : 'Out'}</span>
+            <CartGlyph />
+          </button>
+        )}
+      </div>
     </article>
+  )
+}
+
+function CartGlyph() {
+  return (
+    <svg className="product-card__glyph" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+      <path fill="currentColor" d="M7 18a2 2 0 1 0 2 2 2 2 0 0 0-2-2zm10 0a2 2 0 1 0 2 2 2 2 0 0 0-2-2zM6.2 6l.4 2h12.7l-1.4 7H8.1L6.2 6zM5 4H2V2h3.2l.5 2H21l-2.2 10H7.2L5 4z" />
+    </svg>
+  )
+}
+
+function HeartGlyph({ filled }) {
+  return (
+    <svg className="product-card__glyph" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+      <path
+        fill={filled ? 'currentColor' : 'none'}
+        stroke="currentColor"
+        strokeWidth={filled ? 0 : 1.75}
+        d="M12 20s-7-4.4-7-9a4 4 0 0 1 7-2 4 4 0 0 1 7 2c0 4.6-7 9-7 9z"
+      />
+    </svg>
   )
 }

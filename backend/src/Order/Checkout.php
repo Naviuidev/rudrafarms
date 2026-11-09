@@ -9,6 +9,7 @@ use App\Auth\Addresses;
 use App\Auth\Support;
 use App\Cart\Quote;
 use App\Database\Connection;
+use App\Admin\StoreHours;
 use App\Payment\RazorpayGateway;
 use App\Subscription\SubscriptionCheckout;
 use PDO;
@@ -19,11 +20,11 @@ final class Checkout
     public static function place(array $customer, array $input): array
     {
         Schema::ensure();
+        if (!StoreHours::acceptingWebsiteOrders()) {
+            throw new OrderException('The store is closed.');
+        }
         $customerId = (string) $customer['id'];
         $addressId = trim((string) ($input['addressId'] ?? ''));
-        $type = strtolower(trim((string) ($input['deliveryType'] ?? '')));
-        $slotKey = trim((string) ($input['slotKey'] ?? ''));
-        $slotDate = trim((string) ($input['slotDate'] ?? ''));
         $notes = trim((string) ($input['notes'] ?? ''));
         if (strlen($notes) > 240) {
             throw new OrderException('Keep the delivery note under 240 characters.');
@@ -58,12 +59,9 @@ final class Checkout
             throw new OrderException('Monthly subscriptions are paid from the Subscriptions page. Open Subscriptions, pick a plan, and complete payment there.');
         }
 
-        $slotQuery = $quoteInput;
-        if ($type === 'express') {
-            $slotKey = 'express-now';
-            $slotDate = (new \DateTimeImmutable('now', new \DateTimeZone('Asia/Kolkata')))->format('Y-m-d');
-        }
-        $slot = DeliverySlots::validateAgainstOptions($slotQuery, $type, $slotKey, $slotDate);
+        $resolved = DeliverySlots::resolveQuickCheckout($quoteInput);
+        $type = $resolved['deliveryType'];
+        $slot = $resolved['slot'];
 
         $lines = array_values(array_filter($quote['items'], static fn (array $line): bool => $line['ok']));
         if ($lines === []) {

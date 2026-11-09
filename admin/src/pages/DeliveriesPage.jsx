@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { deliverySection } from '../deliveries/sections.js'
-import DeliverySlotsPanel from './DeliverySlotsPanel.jsx'
 import DocumentTitle from '@brand/components/DocumentTitle.jsx'
 import Button from '@brand/components/Button.jsx'
 import { TextField } from '@brand/components/TextField.jsx'
@@ -265,8 +264,6 @@ export default function DeliveriesPage() {
       </div>
 
       {error ? <p className="field__error" role="alert">{error}</p> : null}
-
-      {section === 'slots' ? <DeliverySlotsPanel onError={reportError} /> : null}
 
       {section === 'assignments' ? (
       <div className="admin-grid">
@@ -643,5 +640,4 @@ const sectionCopy = {
   pending: 'Paid orders and subscription days that still need a driver.',
   assignment: 'Give an order or a subscription day to someone on the team.',
   status: 'Choose a customer and a date. The matching order day updates with that status.',
-  slots: 'Time windows shoppers can choose at checkout.',
 }

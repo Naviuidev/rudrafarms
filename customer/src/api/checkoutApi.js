@@ -39,20 +39,6 @@ export function fetchStoreHours() {
   return request('GET', '/api/store-hours.php')
 }
 
-export function fetchDeliverySlots(payload) {
-  return request('GET', '/api/checkout/slots.php', {
-    params: {
-      latitude: payload.latitude,
-      longitude: payload.longitude,
-      pin: payload.pin || '',
-      coupon: payload.coupon || '',
-      customerId: payload.customerId || '',
-      subscriptionSchedule: payload.subscriptionSchedule || '',
-      items: JSON.stringify(payload.items || []),
-    },
-  })
-}
-
 export function placeQuickOrder(payload) {
   return request('POST', '/api/checkout/place.php', { body: payload })
 }

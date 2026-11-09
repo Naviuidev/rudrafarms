@@ -171,16 +171,31 @@ export default function ProductPage() {
               <p className="subs-muted">Unit: {variantLabel(variant)}</p>
             )}
 
-            <div className="product-detail__cta">
-              <Button className="sub-cta" onClick={() => addToCart(product, variant)} disabled={!purchasable}>
-                {purchasable ? 'Add to cart' : 'Out of stock'}
+            <div className="product-detail__cta" role="toolbar" aria-label="Product actions">
+              <Button
+                className="sub-cta product-detail__cta-cart product-detail__cta-icon-btn"
+                onClick={() => addToCart(product, variant)}
+                disabled={!purchasable}
+                aria-label={purchasable ? `Add ${product.name} to cart` : 'Out of stock'}
+              >
+                <span className="product-detail__cta-label">{purchasable ? 'Add to cart' : 'Out of stock'}</span>
+                <CartIcon />
               </Button>
-              <Button variant="outline" onClick={onWish} disabled={savingWish}>
-                {saved ? 'Saved' : 'Wishlist'}
+              <Button
+                variant="outline"
+                className={`product-detail__cta-wish product-detail__cta-icon-btn${saved ? ' product-detail__cta-wish--saved' : ''}`}
+                onClick={onWish}
+                disabled={savingWish}
+                aria-pressed={saved}
+                aria-label={saved ? `Remove ${product.name} from wishlist` : `Save ${product.name} to wishlist`}
+              >
+                <span className="product-detail__cta-label">{saved ? 'Saved' : 'Wishlist'}</span>
+                <HeartIcon filled={saved} />
               </Button>
               {product.subscription ? (
-                <Button className="sub-cta" to={`/subscriptions?product=${product.id}`}>
-                  Add to subscription
+                <Button className="sub-cta product-detail__cta-sub" to={`/subscriptions?product=${product.id}`}>
+                  <span className="product-detail__cta-label">Add to subscription</span>
+                  <SubIcon />
                 </Button>
               ) : null}
             </div>
@@ -204,5 +219,34 @@ export default function ProductPage() {
         </div>
       ) : null}
     </section>
+  )
+}
+
+function CartIcon() {
+  return (
+    <svg className="product-detail__cta-svg" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+      <path fill="currentColor" d="M7 18a2 2 0 1 0 2 2 2 2 0 0 0-2-2zm10 0a2 2 0 1 0 2 2 2 2 0 0 0-2-2zM6.2 6l.4 2h12.7l-1.4 7H8.1L6.2 6zM5 4H2V2h3.2l.5 2H21l-2.2 10H7.2L5 4z" />
+    </svg>
+  )
+}
+
+function HeartIcon({ filled }) {
+  return (
+    <svg className="product-detail__cta-svg" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+      <path
+        fill={filled ? 'currentColor' : 'none'}
+        stroke="currentColor"
+        strokeWidth={filled ? 0 : 1.75}
+        d="M12 20s-7-4.4-7-9a4 4 0 0 1 7-2 4 4 0 0 1 7 2c0 4.6-7 9-7 9z"
+      />
+    </svg>
+  )
+}
+
+function SubIcon() {
+  return (
+    <svg className="product-detail__cta-svg product-detail__cta-svg--sub" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+      <path fill="currentColor" d="M7 4h10v2H7zm-2 4h14v2H5zm2 4h10v10H7zm2 2v6h6v-6z" />
+    </svg>
   )
 }

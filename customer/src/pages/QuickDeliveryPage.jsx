@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import Button from '@brand/components/Button.jsx'
 import DocumentTitle from '@brand/components/DocumentTitle.jsx'
@@ -9,18 +8,11 @@ import { useCatalog } from '../context/catalogContext.js'
 import { useShop } from '../context/shopContext.js'
 import { useAddToCart } from '../useAddToCart.js'
 
-const modes = [
-  { id: 'express', title: 'Express', copy: 'Fastest slot open now.' },
-  { id: 'same-day', title: 'Same day', copy: 'Later today, before close.' },
-  { id: 'scheduled', title: 'Scheduled', copy: 'Pick a day and window.' },
-]
-
 export default function QuickDeliveryPage() {
   const addToCart = useAddToCart()
   const place = useLocation()
   const { defaultAddress } = useShop()
   const { status, products, error, reload } = useCatalog()
-  const [mode, setMode] = useState('same-day')
   const quickProducts = products.filter((product) => product.quickDelivery)
 
   return (
@@ -29,7 +21,7 @@ export default function QuickDeliveryPage() {
       <div className="container">
         <header className="page-intro page-intro--plain quick-head">
           <h1>Quick delivery</h1>
-          <p className="subs-muted">Order once. Pick a slot. No subscription.</p>
+          <p className="subs-muted">Add to cart and check out. Delivery is available only in Visakhapatnam (Vizag).</p>
         </header>
 
         <div className="quick-address">
@@ -46,25 +38,6 @@ export default function QuickDeliveryPage() {
               <Button className="sub-cta quick-address__btn" to="/addresses/new" state={{ from: `${place.pathname}${place.search}` }}>Add address</Button>
             </>
           )}
-        </div>
-
-        <div className="quick-modes" role="radiogroup" aria-label="Delivery speed">
-          <p className="subs-label">When</p>
-          <div className="quick-mode-scroll">
-            {modes.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                className={mode === item.id ? 'quick-mode-btn quick-mode-btn--active' : 'quick-mode-btn'}
-                role="radio"
-                aria-checked={mode === item.id}
-                onClick={() => setMode(item.id)}
-              >
-                <strong>{item.title}</strong>
-                <span className="quick-mode-btn__hint">{item.copy}</span>
-              </button>
-            ))}
-          </div>
         </div>
 
         {status === 'error' ? (

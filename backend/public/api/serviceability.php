@@ -36,5 +36,5 @@ $pin = preg_replace('/\D/', '', (string) ($body['pin'] ?? '')) ?? '';
 
 Json::send([
     'purpose' => $purpose,
-    'serviceability' => $areas->check($latitude, $longitude, $pin),
+    'serviceability' => $areas->checkForPurpose($latitude, $longitude, $pin, $purpose),
 ]);

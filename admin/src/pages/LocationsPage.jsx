@@ -154,10 +154,10 @@ export default function LocationsPage() {
     <>
       <DocumentTitle title="Locations" />
       <div className="page-heading">
-        <p className="eyebrow">Subscriptions</p>
-        <h1>Locations</h1>
+        <p className="eyebrow">Operations</p>
+        <h1>Service zones</h1>
         <p>
-          Process a PIN code to place the area, then set how many kilometres around it can start a subscription. A day-to-day product order uses the customer’s address and is not limited to this list.
+          Add areas where <strong>daily subscriptions</strong> can deliver (PIN + radius). Customers must be inside one of these zones to start a subscription. <strong>One-time quick orders</strong> accept any address with a map point — they are not limited to this list.
         </p>
       </div>
       {state.status === 'loading' ? <p role="status">Loading locations…</p> : null}

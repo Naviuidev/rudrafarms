@@ -63,9 +63,14 @@ final class Quote
         $serviceable = $point['present'] && $problems === 0 && $subtotal > 0 && $orderKind !== 'mixed';
         $message = self::serviceMessage($point['present'], $orderKind, $areas, $problems);
 
+        if ($orderKind === 'quick' && $point['present'] && $problems === 0 && $subtotal > 0 && !$areas['quick']) {
+            $serviceable = false;
+            $message = ServiceArea::outsideMessage($areas, 'checkout');
+        }
+
         if ($orderKind === 'subscription' && $point['present'] && $problems === 0 && $subtotal > 0 && !$areas['subscription']) {
             $serviceable = false;
-            $message = 'Subscription delivery is not available for this address.';
+            $message = ServiceArea::outsideMessage($areas, 'subscription');
         }
 
         return [
@@ -301,14 +306,14 @@ final class Quote
         }
         if ($orderKind === 'subscription') {
             return $areas['subscription']
-                ? 'This address can take a daily subscription. You can place this order any time.'
-                : 'Subscription delivery is not available for this address.';
+                ? 'This address is in our Vizag service area. You can start a subscription any time.'
+                : ServiceArea::outsideMessage($areas, 'subscription');
         }
-        if ($areas['subscription']) {
-            return 'This address can take a day-to-day order. A subscription can start here too.';
+        if ($areas['quick']) {
+            return 'This address is in our Vizag service area.';
         }
 
-        return 'This address can take a day-to-day order.';
+        return ServiceArea::outsideMessage($areas, 'checkout');
     }
 
     /** @param array<string, mixed> $item */

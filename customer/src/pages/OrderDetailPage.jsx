@@ -124,9 +124,6 @@ export default function OrderDetailPage() {
     try {
       const placed = await reorderPlace({
         orderId: order.id,
-        deliveryType: order.deliveryType === 'express' ? 'express' : 'standard',
-        slotKey: order.slotKey,
-        slotDate: order.slotDate,
         notes: order.deliveryNote || '',
         coupon: '',
       })

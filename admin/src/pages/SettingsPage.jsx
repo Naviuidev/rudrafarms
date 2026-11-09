@@ -4,7 +4,7 @@ import Button from '@brand/components/Button.jsx'
 import DocumentTitle from '@brand/components/DocumentTitle.jsx'
 import { TextField } from '@brand/components/TextField.jsx'
 import { useToast } from '@brand/toastContext.js'
-import { fetchSettings, saveStoreHours, saveStoreProfile, SettingsError } from '../api/settingsApi.js'
+import { fetchSettings, saveStoreProfile, SettingsError } from '../api/settingsApi.js'
 import { settingsSection } from '../settings/sections.js'
 
 const storageKey = 'rff-admin-settings'
@@ -33,10 +33,6 @@ export default function SettingsPage() {
     minimum: '',
   })
   const [errors, setErrors] = useState({})
-  const [hours, setHours] = useState({ open: '06:00', close: '20:00' })
-  const [hourErrors, setHourErrors] = useState({})
-  const [hoursError, setHoursError] = useState('')
-  const [hoursBusy, setHoursBusy] = useState(false)
   const [storeBusy, setStoreBusy] = useState(false)
   const [storeError, setStoreError] = useState('')
 
@@ -45,7 +41,6 @@ export default function SettingsPage() {
     fetchSettings()
       .then((next) => {
         if (cancel || !next) return
-        if (next.hours) setHours({ open: next.hours.open || '06:00', close: next.hours.close || '20:00' })
         if (next.store?.storeName) {
           setValues({
             storeName: next.store.storeName,
@@ -55,7 +50,7 @@ export default function SettingsPage() {
         }
       })
       .catch((error) => {
-        if (!cancel) setHoursError(error instanceof SettingsError ? error.message : 'Settings could not be loaded.')
+        if (!cancel) setStoreError(error instanceof SettingsError ? error.message : 'Settings could not be loaded.')
       })
     return () => {
       cancel = true
@@ -65,34 +60,6 @@ export default function SettingsPage() {
   function update(event) {
     const { name, value } = event.target
     setValues((current) => ({ ...current, [name]: value }))
-  }
-
-  function updateHours(event) {
-    const { name, value } = event.target
-    setHours((current) => ({ ...current, [name]: value }))
-  }
-
-  async function saveHours(event) {
-    event.preventDefault()
-    const next = {}
-    if (!hours.open) next.open = 'Choose an open time.'
-    if (!hours.close) next.close = 'Choose a close time.'
-    if (hours.open && hours.close && hours.open >= hours.close) {
-      next.close = 'Close time has to be later than open time.'
-    }
-    setHourErrors(next)
-    if (Object.keys(next).length) return
-    setHoursBusy(true)
-    setHoursError('')
-    try {
-      const saved = await saveStoreHours(hours.open, hours.close)
-      if (saved) setHours({ open: saved.open, close: saved.close })
-      showToast({ title: 'Store hours saved', message: `One-time orders are accepted ${saved?.open || hours.open}–${saved?.close || hours.close} IST.` })
-    } catch (error) {
-      setHoursError(error instanceof SettingsError ? error.message : 'Store hours could not be saved.')
-    } finally {
-      setHoursBusy(false)
-    }
   }
 
   async function submit(event) {
@@ -130,30 +97,19 @@ export default function SettingsPage() {
     return <Navigate to="/developer?section=email" replace />
   }
 
+  if (params.get('section') === 'hours') {
+    return <Navigate to="/settings?section=store" replace />
+  }
+
   return (
     <>
       <DocumentTitle title="Settings" />
-      {section === 'hours' ? (
-        <>
-          <div className="page-heading">
-            <p className="eyebrow">Store</p>
-            <h1>Store hours</h1>
-            <p>One-time orders can be placed while the shop is open. Subscriptions can still be placed any time.</p>
-          </div>
-          <form className="panel settings-form" onSubmit={saveHours} noValidate>
-            {hoursError ? <p className="field__error" role="alert">{hoursError}</p> : null}
-            <TextField id="store-open" name="open" type="time" label="Opens" required value={hours.open} error={hourErrors.open} onChange={updateHours} />
-            <TextField id="store-close" name="close" type="time" label="Closes" required value={hours.close} error={hourErrors.close} onChange={updateHours} />
-            <Button type="submit" disabled={hoursBusy}>{hoursBusy ? 'Saving…' : 'Save hours'}</Button>
-          </form>
-        </>
-      ) : null}
       {section === 'store' ? (
         <>
           <div className="page-heading">
             <p className="eyebrow">Store</p>
             <h1>Store name</h1>
-            <p>The name customers see, plus the support address for this shop.</p>
+            <p>The name customers see, plus the support address for this shop. Use the top bar switch to open or close website checkout.</p>
           </div>
           <form className="panel settings-form" onSubmit={submit} noValidate>
             {storeError ? <p className="field__error" role="alert">{storeError}</p> : null}

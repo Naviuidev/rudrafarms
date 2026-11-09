@@ -1,36 +1,50 @@
 {
     "locations": [
         {
-            "id": "appa-himayathsagar",
-            "name": "Appa Himayathsagar",
-            "city": "K.V.Rangareddy",
-            "state": "Telangana",
-            "pins": [
-                "500008"
-            ],
-            "subscription": true,
-            "circle": {
-                "latitude": 17.3706985,
-                "longitude": 78.3555211,
-                "radiusKm": 5
-            },
-            "polygon": null
-        },
-        {
-            "id": "pattikonda",
-            "name": "Pattikonda",
-            "city": "Kurnool",
+            "id": "vizag",
+            "name": "Visakhapatnam (Vizag)",
+            "city": "Visakhapatnam",
             "state": "Andhra Pradesh",
             "pins": [
-                "518380"
+                "530001",
+                "530002",
+                "530003",
+                "530004",
+                "530005",
+                "530016",
+                "530017",
+                "530018",
+                "530020",
+                "530022",
+                "530024",
+                "530026",
+                "530027",
+                "530028",
+                "530029",
+                "530031",
+                "530032",
+                "530040",
+                "530041",
+                "530043",
+                "530044",
+                "530045",
+                "530046",
+                "530047",
+                "530048",
+                "530049",
+                "531001",
+                "531019",
+                "531020",
+                "531021",
+                "531022"
             ],
-            "quick": false,
+            "quick": true,
             "subscription": true,
-            "priority": 0,
+            "priority": 10,
             "circle": {
-                "latitude": 15.3948233,
-                "longitude": 77.5008168,
-                "radiusKm": 20
+                "latitude": 17.6868,
+                "longitude": 83.2185,
+                "radiusKm": 30
             },
             "polygon": null
         }

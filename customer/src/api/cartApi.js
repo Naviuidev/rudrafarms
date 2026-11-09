@@ -46,6 +46,7 @@ export async function quoteCart(payload) {
         dayToDay: Boolean(data?.serviceability?.dayToDay),
         subscription: Boolean(data?.serviceability?.subscription),
         message: typeof data?.serviceability?.message === 'string' ? data.serviceability.message : '',
+        quickZones: Array.isArray(data?.serviceability?.zones) ? data.serviceability.zones : [],
       },
     }
   } catch (error) {
