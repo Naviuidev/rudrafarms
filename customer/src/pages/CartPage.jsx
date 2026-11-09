@@ -7,9 +7,10 @@ import EmptyState from '@brand/components/EmptyState.jsx'
 import { TextField } from '@brand/components/TextField.jsx'
 import CartTotals from '../components/CartTotals.jsx'
 import QuantityStepper from '../components/QuantityStepper.jsx'
+import { useCatalog } from '../context/catalogContext.js'
 import { useShop } from '../context/shopContext.js'
 import { useWebsiteOrdersGate } from '../hooks/useWebsiteOrdersGate.js'
-import { formatPrice } from '../data/catalog.js'
+import { formatPrice, variantLabel } from '../data/catalog.js'
 
 const MIXED_CART_MESSAGE = 'Quick delivery and subscription items need separate checkouts.'
 
@@ -26,6 +27,7 @@ export default function CartPage() {
     quoteError,
     defaultAddress,
   } = useShop()
+  const { findProduct } = useCatalog()
   const [code, setCode] = useState(coupon)
   const [mixedPromptOpen, setMixedPromptOpen] = useState(false)
   const acceptingWebsiteOrders = useWebsiteOrdersGate()
@@ -41,6 +43,21 @@ export default function CartPage() {
       setMixedPromptOpen(false)
     }
   }, [mixedCart, quoteStatus])
+
+  function removeMixedItem(key) {
+    setQty(key, 0)
+  }
+
+  function itemPresentation(item) {
+    const line = quoted[item.key]
+    const product = findProduct(item.productId)
+    const variant = product?.variants?.find((entry) => entry.id === item.variantId)
+    const name = product?.name || (line?.name !== 'Cart item' ? line?.name : 'Product')
+    const image = line?.image || product?.image || ''
+    const unit = line?.unit || variantLabel(variant)
+    const mode = item.deliveryMode === 'subscription' ? 'subscription' : 'quick'
+    return { name, image, unit, mode }
+  }
 
   return (
     <section className="section account-page">
@@ -140,10 +157,38 @@ export default function CartPage() {
       <Dialog
         open={mixedPromptOpen}
         title="Separate checkouts"
+        className="dialog--cart-mixed"
         onClose={() => setMixedPromptOpen(false)}
       >
         <p className="area-prompt__copy">{MIXED_CART_MESSAGE}</p>
-        <p className="subs-muted">Keep quick-delivery items here and checkout. Add subscription products from the Subscriptions page.</p>
+        <p className="subs-muted">Remove one item below to continue checkout here, or use Subscriptions for subscription products.</p>
+        <ul className="cart-mixed-list" aria-label="Cart items">
+          {items.map((item) => {
+            const { name, image, unit, mode } = itemPresentation(item)
+            return (
+              <li key={item.key} className="cart-mixed-card">
+                <button
+                  type="button"
+                  className="cart-mixed-card__remove"
+                  aria-label={`Remove ${name} from cart`}
+                  onClick={() => removeMixedItem(item.key)}
+                >
+                  ×
+                </button>
+                <div className="cart-mixed-card__media">
+                  {image ? <img src={image} alt="" width="72" height="72" /> : <span className="cart-line__placeholder" />}
+                </div>
+                <div className="cart-mixed-card__body">
+                  <span className={`cart-mixed-card__tag cart-mixed-card__tag--${mode}`}>
+                    {mode === 'subscription' ? 'Subscription' : 'Quick delivery'}
+                  </span>
+                  <strong>{name}</strong>
+                  {unit ? <p>{unit} · Qty {item.qty}</p> : <p>Qty {item.qty}</p>}
+                </div>
+              </li>
+            )
+          })}
+        </ul>
         <div className="dialog-form">
           <Button type="button" onClick={() => setMixedPromptOpen(false)}>OK</Button>
           <Button type="button" variant="outline" to="/subscriptions">Subscriptions</Button>
