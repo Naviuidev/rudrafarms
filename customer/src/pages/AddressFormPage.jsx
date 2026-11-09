@@ -86,7 +86,7 @@ function AddressEditor({ address }) {
   const location = useLocation()
   const deliveryPurpose = addressPurpose(location.state?.from, location.state?.purpose)
   const subscriptionFlow = deliveryPurpose === 'subscription'
-  const checkPurpose = subscriptionFlow ? 'subscription' : 'checkout'
+  const checkPurpose = subscriptionFlow ? 'subscription' : 'address'
   const { saveAddress, serviceLocations, account } = useShop()
   const showToast = useToast()
   const contactSeed = {
@@ -100,6 +100,8 @@ function AddressEditor({ address }) {
   const [locating, setLocating] = useState(false)
   const [saving, setSaving] = useState(false)
   const [areaPrompt, setAreaPrompt] = useState(false)
+  const [outsidePrompt, setOutsidePrompt] = useState({ open: false, message: '' })
+  const [areaPromptMessage, setAreaPromptMessage] = useState('')
   const resolvedPinRef = useRef('')
 
   const latitude = values.latitude
@@ -235,8 +237,13 @@ function AddressEditor({ address }) {
         }, checkPurpose)
 
       if (!service.allowed) {
-        setLocateError(service.message || 'We deliver only in Visakhapatnam (Vizag).')
-        if (subscriptionFlow) setAreaPrompt(true)
+        const message = service.message || 'We deliver only in Visakhapatnam (Vizag).'
+        if (subscriptionFlow && subscriptionAreas.length > 0) {
+          setAreaPromptMessage(message)
+          setAreaPrompt(true)
+        } else {
+          setOutsidePrompt({ open: true, message })
+        }
         return
       }
 
@@ -385,7 +392,8 @@ function AddressEditor({ address }) {
                 checking={checking}
                 error={checked.error}
                 hideUnchecked
-                mode={subscriptionFlow ? 'subscription' : 'quick'}
+                hideOutsideMessage
+                mode={subscriptionFlow ? 'subscription' : 'both'}
               />
             </div>
             {locateError ? <p className="field__error" role="alert">{locateError}</p> : null}
@@ -403,13 +411,22 @@ function AddressEditor({ address }) {
         </form>
 
         <Dialog
+          open={outsidePrompt.open}
+          title="Outside delivery area"
+          className="dialog--areas"
+          onClose={() => setOutsidePrompt({ open: false, message: '' })}
+        >
+          <p className="area-prompt__copy">{outsidePrompt.message}</p>
+        </Dialog>
+
+        <Dialog
           open={areaPrompt}
           title="Outside subscription area"
           className="dialog--areas"
-          onClose={() => setAreaPrompt(false)}
+          onClose={() => { setAreaPrompt(false); setAreaPromptMessage('') }}
         >
           <p className="area-prompt__copy">
-            This location is not in a subscription zone. Pick an area below or move the map pin inside a zone.
+            {areaPromptMessage || 'This location is not in a subscription zone. Pick an area below or move the map pin inside a zone.'}
           </p>
           <ul className="area-list">
             {subscriptionAreas.map((item) => (

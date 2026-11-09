@@ -6,6 +6,7 @@ export default function ServiceabilityStatus({
   checking = false,
   error = '',
   hideUnchecked = false,
+  hideOutsideMessage = false,
   mode = 'both',
   compact = false,
 }) {
@@ -37,7 +38,7 @@ export default function ServiceabilityStatus({
     if (compact) {
       return (
         <p className={ok ? 'address-status address-status--ok' : 'address-status address-status--warn'} role="status">
-          {ok ? (zone || 'In Vizag service area') : (service.message || 'Outside Vizag delivery area')}
+          {ok ? (zone || 'In Vizag service area') : (hideOutsideMessage ? 'Outside delivery area' : (service.message || 'Outside Vizag delivery area'))}
         </p>
       )
     }
@@ -56,13 +57,45 @@ export default function ServiceabilityStatus({
 
   const inZone = Boolean(service.subscription)
   const zones = Array.isArray(service.subscriptionZones) ? service.subscriptionZones : []
+  const quickZones = Array.isArray(service.quickZones) ? service.quickZones : []
 
   if (compact) {
-    if (inZone) {
-      const label = zones[0] || service.selectedSubscriptionZone || 'In delivery area'
+    const ok = mode === 'quick'
+    ? Boolean(service.allowed ?? service.quick)
+      : mode === 'subscription'
+        ? Boolean(service.allowed ?? service.subscription)
+        : Boolean(service.allowed ?? (service.quick || service.subscription))
+    if (ok) {
+    const label = service.selectedQuickZone
+      || service.selectedSubscriptionZone
+      || quickZones[0]
+      || zones[0]
+      || 'In delivery area'
       return <p className="address-status address-status--ok" role="status">{label}</p>
     }
-    return <p className="address-status address-status--warn" role="status">Outside subscription area</p>
+    return (
+      <p className="address-status address-status--warn" role="status">
+        {hideOutsideMessage ? 'Outside delivery area' : (service.message || 'Outside delivery area')}
+      </p>
+    )
+  }
+
+  if (mode === 'both') {
+    const allowed = Boolean(service.allowed ?? (service.quick || service.subscription))
+    return (
+      <ul className="availability">
+        <li>
+          <span>Delivery area</span>
+          <Badge tone={allowed ? 'green' : 'amber'}>{allowed ? 'Inside service area' : 'Outside service area'}</Badge>
+        </li>
+        {allowed && (quickZones[0] || zones[0]) ? (
+          <li>
+            <span>Matched</span>
+            <span>{quickZones[0] || zones[0]}</span>
+          </li>
+        ) : null}
+      </ul>
+    )
   }
 
   return (
@@ -77,7 +110,7 @@ export default function ServiceabilityStatus({
           <span>{zones.join(', ')}</span>
         </li>
       ) : null}
-      {mode === 'both' && !inZone && service.message ? (
+      {!inZone && service.message && !hideOutsideMessage ? (
         <li><span>{service.message}</span></li>
       ) : null}
     </ul>

@@ -146,7 +146,7 @@ final class ServiceArea
 
         if ($latitude !== null && $longitude !== null || $pin !== '') {
             foreach ($this->config['zones'] as $zone) {
-                $listedPin = $pin !== '' && in_array($pin, $zone['pins'] ?? [], true);
+                $listedPin = $pin !== '' && $this->pinMatchesZone($zone, $pin);
                 $inside = $latitude !== null && $longitude !== null && $this->zoneContains($zone, $latitude, $longitude);
                 if (!$listedPin && !$inside) {
                     continue;
@@ -225,6 +225,29 @@ final class ServiceArea
         }
 
         return self::OUTSIDE_SERVICE_MESSAGE;
+    }
+
+    /** @param array<string, mixed> $zone */
+    private function pinMatchesZone(array $zone, string $pin): bool
+    {
+        if ($pin === '') {
+            return false;
+        }
+
+        $zonePins = is_array($zone['pins'] ?? null) ? $zone['pins'] : [];
+        if (in_array($pin, $zonePins, true)) {
+            return true;
+        }
+
+        $place = $this->config['pins'][$pin] ?? null;
+        if (!is_array($place)) {
+            return false;
+        }
+
+        $lat = (float) ($place['latitude'] ?? 0);
+        $lng = (float) ($place['longitude'] ?? 0);
+
+        return $this->zoneContains($zone, $lat, $lng);
     }
 
     /** @param array<string, mixed> $zone */
