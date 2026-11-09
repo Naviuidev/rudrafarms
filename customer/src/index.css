@@ -3043,21 +3043,21 @@ button.category-card {
 }
 
 .address-pop {
+  z-index: 40;
+  background: #6ba6ff;
+  border: 1px solid #fff;
+  border-radius: 14px;
+  align-items: center;
+  gap: 14px;
+  width: min(720px, 100% - 24px);
+  margin: 0;
+  padding: 12px 16px;
+  display: flex;
   position: fixed;
   top: 75px;
   left: 50%;
-  z-index: 40;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  width: min(720px, calc(100% - 24px));
-  margin: 0;
-  padding: 12px 16px;
-  border: 1px solid #ffffff;
-  border-radius: 14px;
-  background: #0065ff33;
-  box-shadow: 0 16px 40px rgba(153, 27, 27, 0.12);
-  transform: translateX(-50%);
+  transform: translate(-50%);
+  box-shadow: 0 16px 40px #991b1b1f;
 }
 
 .address-pop p {
