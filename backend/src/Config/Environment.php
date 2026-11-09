@@ -31,8 +31,11 @@ final class Environment
 
     public static function boot(string $root): void
     {
-        if (is_file($root . '/.env')) {
-            \Dotenv\Dotenv::createImmutable($root)->safeLoad();
+        $envFile = is_file($root . '/.env')
+            ? $root . '/.env'
+            : (is_file(dirname($root) . '/.env') ? dirname($root) . '/.env' : null);
+        if ($envFile !== null) {
+            \Dotenv\Dotenv::createImmutable(dirname($envFile))->safeLoad();
         }
 
         if (trim((string) ($_ENV['APP_ENV'] ?? '')) === '') {

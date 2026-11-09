@@ -4,8 +4,9 @@
 #   chmod +x deploy.sh
 #   ./deploy.sh
 #
-# Before first run on server: create backend/.env with APP_ENV=production and PROD_* values
-# (or copy .env.example on the server and edit). This script does not upload your local .env.
+# Env: one project-root .env (see .env.example) with APP_ENV=production and PROD_* values.
+# Mac builds read PROD_APP_URL for customer/admin; server needs backend/.env (or root .env).
+# This script does not upload your local .env.
 
 set -euo pipefail
 

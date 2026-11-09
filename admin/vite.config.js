@@ -3,14 +3,16 @@ import { fileURLToPath } from 'node:url'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 import { sharedDepsPlugin } from '../shared/resolveSharedDeps.mjs'
+import { monorepoEnvPlugin } from '../shared/vite/monorepoEnv.mjs'
 
 const root = path.dirname(fileURLToPath(import.meta.url))
 
-export default defineConfig({
-  plugins: [react(), sharedDepsPlugin(root)],
+export default defineConfig(({ mode }) => ({
+  plugins: [react(), sharedDepsPlugin(root), monorepoEnvPlugin(mode, root)],
   resolve: {
     alias: {
       '@brand': path.resolve(root, '../shared/ui'),
+      '@shared': path.resolve(root, '../shared'),
     },
   },
   server: {
@@ -19,4 +21,4 @@ export default defineConfig({
       allow: [path.resolve(root, '..')],
     },
   },
-})
+}))

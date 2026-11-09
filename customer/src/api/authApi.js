@@ -1,6 +1,7 @@
 import axios from 'axios'
+import { apiUnreachableMessage, getApiBase } from '@shared/config/apiBase.js'
 
-const base = (import.meta.env.VITE_API_URL || 'http://localhost:8000').replace(/\/$/, '')
+const base = getApiBase()
 const TOKEN_KEY = 'rudras.session'
 
 export class AuthError extends Error {
@@ -39,9 +40,7 @@ async function request(method, path, body) {
     let message = typeof data?.message === 'string' ? data.message : ''
     if (!message) {
       const offline = !error?.response || error?.code === 'ERR_NETWORK'
-      message = offline
-        ? 'Cannot reach the account service. Start the API from the backend folder and set VITE_API_URL in customer/.env.local.'
-        : 'The account service is unavailable.'
+      message = offline ? apiUnreachableMessage() : 'The account service is unavailable.'
     }
     const fields = data?.errors && typeof data.errors === 'object' ? data.errors : {}
     throw new AuthError(message, fields, typeof data?.code === 'string' ? data.code : '')
