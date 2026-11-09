@@ -179,7 +179,7 @@ export default function ProductPage() {
                 {saved ? 'Saved' : 'Wishlist'}
               </Button>
               {product.subscription ? (
-                <Button variant="ghost" to={`/subscriptions?product=${product.id}`}>
+                <Button className="sub-cta" to={`/subscriptions?product=${product.id}`}>
                   Add to subscription
                 </Button>
               ) : null}

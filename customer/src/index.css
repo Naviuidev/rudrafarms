@@ -3202,13 +3202,17 @@ button.category-card {
 }
 
 .product-detail__cta {
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
   margin-top: 8px;
 }
 
-.product-detail__cta .btn {
-  width: 100%;
+.store .product-detail__cta .btn {
+  width: auto;
+  max-width: 100%;
+  white-space: nowrap;
 }
 
 .product-detail__related {
