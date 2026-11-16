@@ -7,6 +7,7 @@ namespace App\Admin;
 use App\Auth\Support;
 use App\Database\Connection;
 use App\Order\Schema;
+use App\Subscription\SubscriptionDeliveryDays;
 use App\Subscription\SubscriptionSchema;
 use PDO;
 
@@ -492,96 +493,16 @@ final class AdminOrdersService
                 return [];
             }
             $tone = $orderStatus === 'delivered' ? 'delivered' : ($date > $today ? 'upcoming' : 'pending');
+            $labels = [
+                'delivered' => 'Delivered',
+                'upcoming' => 'Upcoming',
+                'pending' => 'Yet to be delivered',
+            ];
 
-            return [self::dayCard($date, $tone)];
+            return [['date' => $date, 'tone' => $tone, 'label' => $labels[$tone] ?? 'Yet to be delivered']];
         }
 
-        $start = (string) ($cycle['periodStart'] ?? '');
-        $end = (string) ($cycle['periodEnd'] ?? '');
-        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $start) || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $end) || $start > $end) {
-            return [];
-        }
-
-        SubscriptionSchema::ensure();
-
-        $skipRows = $pdo->prepare('SELECT delivery_date FROM subscription_skips WHERE subscription_id = ?');
-        $skipRows->execute([$subscriptionId]);
-        $skips = array_fill_keys(array_map('strval', $skipRows->fetchAll(PDO::FETCH_COLUMN) ?: []), true);
-
-        $pauseRows = $pdo->prepare('SELECT start_date, end_date FROM subscription_pauses WHERE subscription_id = ?');
-        $pauseRows->execute([$subscriptionId]);
-        $pauses = [];
-        foreach ($pauseRows->fetchAll(PDO::FETCH_ASSOC) ?: [] as $pause) {
-            if (!is_array($pause)) {
-                continue;
-            }
-            $pauses[] = [(string) $pause['start_date'], (string) $pause['end_date']];
-        }
-
-        $deliveryRows = $pdo->prepare(
-            'SELECT delivery_date, status FROM subscription_deliveries WHERE subscription_id = ? AND cycle_id = ?',
-        );
-        $deliveryRows->execute([$subscriptionId, (string) ($cycle['id'] ?? '')]);
-        $statuses = [];
-        foreach ($deliveryRows->fetchAll(PDO::FETCH_ASSOC) ?: [] as $delivery) {
-            if (is_array($delivery)) {
-                $statuses[(string) $delivery['delivery_date']] = (string) $delivery['status'];
-            }
-        }
-
-        $zone = new \DateTimeZone('Asia/Kolkata');
-        $cursor = new \DateTimeImmutable($start, $zone);
-        $last = new \DateTimeImmutable($end, $zone);
-        $days = [];
-        while ($cursor <= $last) {
-            $date = $cursor->format('Y-m-d');
-            $paused = false;
-            foreach ($pauses as [$pauseStart, $pauseEnd]) {
-                if ($date >= $pauseStart && $date <= $pauseEnd) {
-                    $paused = true;
-                    break;
-                }
-            }
-            $deliveryStatus = $statuses[$date] ?? '';
-            $explicit = ['confirmed', 'preparing', 'assigned', 'out_for_delivery', 'cancelled', 'failed'];
-            $label = '';
-            if ($deliveryStatus === 'delivered') {
-                $tone = 'delivered';
-            } elseif (in_array($deliveryStatus, $explicit, true)) {
-                $tone = $date > $today ? 'upcoming' : 'pending';
-                $label = self::statusLabel($deliveryStatus);
-            } elseif (isset($skips[$date])) {
-                $tone = 'skipped';
-            } elseif ($paused) {
-                $tone = 'paused';
-            } elseif ($date > $today) {
-                $tone = 'upcoming';
-            } else {
-                $tone = 'pending';
-            }
-            $days[] = self::dayCard($date, $tone, $label);
-            $cursor = $cursor->modify('+1 day');
-        }
-
-        return $days;
-    }
-
-    /** @return array{date: string, tone: string, label: string} */
-    private static function dayCard(string $date, string $tone, string $label = ''): array
-    {
-        $labels = [
-            'delivered' => 'Delivered',
-            'upcoming' => 'Upcoming',
-            'skipped' => 'Skipped',
-            'paused' => 'Paused',
-            'pending' => 'Yet to be delivered',
-        ];
-
-        return [
-            'date' => $date,
-            'tone' => $tone,
-            'label' => $label !== '' ? $label : ($labels[$tone] ?? 'Yet to be delivered'),
-        ];
+        return SubscriptionDeliveryDays::forCycle($subscriptionId, $cycle, false);
     }
 
     private static function statusLabel(string $status): string

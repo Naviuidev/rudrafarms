@@ -1,0 +1,12 @@
+{
+    "faqs": [
+        {
+            "id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaa0001",
+            "question": "Where do you deliver?",
+            "answer": "We deliver in Visakhapatnam (Vizag). Add your PIN on checkout to confirm your area.",
+            "active": true,
+            "sortOrder": 0,
+            "updatedAt": "2026-01-01 10:00:00"
+        }
+    ]
+}

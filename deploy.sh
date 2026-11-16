@@ -61,6 +61,8 @@ LOCATIONS="\$STORAGE/locations.json"
 LOCATIONS_BACKUP="\$(backup_storage_file "\$LOCATIONS")"
 HERO="\$STORAGE/hero.json"
 HERO_BACKUP="\$(backup_storage_file "\$HERO")"
+FAQS="\$STORAGE/faqs.json"
+FAQS_BACKUP="\$(backup_storage_file "\$FAQS")"
 CATALOG_FLAG="\$STORAGE/catalog.seeded"
 CATALOG_BACKUP="\$(backup_storage_file "\$CATALOG_FLAG")"
 if [[ -d "$APP_DIR/.git" ]]; then
@@ -87,11 +89,17 @@ restore_storage_file() {
 }
 restore_storage_file "\$LOCATIONS" "\$LOCATIONS_BACKUP" "storage/locations.json"
 restore_storage_file "\$HERO" "\$HERO_BACKUP" "storage/hero.json"
+restore_storage_file "\$FAQS" "\$FAQS_BACKUP" "storage/faqs.json"
 restore_storage_file "\$CATALOG_FLAG" "\$CATALOG_BACKUP" "storage/catalog.seeded"
 if [[ ! -f "\$LOCATIONS" && -f "$APP_DIR/backend/storage/locations.example.json" ]]; then
   mkdir -p "\$(dirname "\$LOCATIONS")"
   cp "$APP_DIR/backend/storage/locations.example.json" "\$LOCATIONS"
   echo "Created storage/locations.json from locations.example.json"
+fi
+if [[ ! -f "\$FAQS" && -f "$APP_DIR/backend/storage/faqs.example.json" ]]; then
+  mkdir -p "\$(dirname "\$FAQS")"
+  cp "$APP_DIR/backend/storage/faqs.example.json" "\$FAQS"
+  echo "Created storage/faqs.json from faqs.example.json"
 fi
 REMOTE
 

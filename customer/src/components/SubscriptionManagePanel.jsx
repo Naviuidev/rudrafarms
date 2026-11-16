@@ -12,6 +12,7 @@ import {
   withdrawSkippedDelivery,
 } from '../api/subscriptionApi.js'
 import { formatPrice } from '../data/catalog.js'
+import SubscriptionDeliveryCalendar from './SubscriptionDeliveryCalendar.jsx'
 
 export const DELIVERY_CLOCK = {
   morning: { label: '7:00 AM', minutes: 7 * 60 },
@@ -148,6 +149,13 @@ export default function SubscriptionManagePanel({ sub, onSubChange, error: exter
             ))}
           </ul>
         </section>
+
+        <Accordion title="Delivery calendar" defaultOpen>
+          <SubscriptionDeliveryCalendar
+            deliveryDays={sub.deliveryDays}
+            calendarCycle={sub.calendarCycle}
+          />
+        </Accordion>
 
         <Accordion title="Deliveries">
           <p className="subs-label">Upcoming</p>
@@ -305,8 +313,8 @@ export default function SubscriptionManagePanel({ sub, onSubChange, error: exter
   )
 }
 
-function Accordion({ title, children }) {
-  const [open, setOpen] = useState(false)
+function Accordion({ title, children, defaultOpen = false }) {
+  const [open, setOpen] = useState(defaultOpen)
   return (
     <section className="subs-basket subs-accordion">
       <button type="button" className="subs-accordion__toggle" aria-expanded={open} onClick={() => setOpen((value) => !value)}>

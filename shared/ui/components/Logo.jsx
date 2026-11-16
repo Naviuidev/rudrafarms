@@ -5,7 +5,7 @@ import './Logo.css'
 export default function Logo({ to = '/', tone = 'dark' }) {
   return (
     <Link to={to} className={`logo logo--${tone}`} aria-label="Rudras Farm Fresh home">
-      <img className="logo__image" src={logo} alt="" width="72" height="72" />
+      <img className="logo__image" src={logo} alt="" width="92" height="92" />
     </Link>
   )
 }

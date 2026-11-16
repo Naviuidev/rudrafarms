@@ -1,8 +1,15 @@
 import path from 'node:path'
-import { loadEnv } from 'vite'
+import { createRequire } from 'node:module'
 
 const DEFAULT_LOCAL = 'http://localhost:8000'
 const DEFAULT_PROD = 'https://api.rudrasfarmfresh.in'
+
+/** Vite is installed under customer/ or admin/, not under shared/. */
+function loadEnv(mode, appRoot, envDir) {
+  const require = createRequire(path.join(appRoot, 'package.json'))
+  const { loadEnv: viteLoadEnv } = require('vite')
+  return viteLoadEnv(mode, envDir, '')
+}
 
 /**
  * Same idea as backend APP_ENV + LOCAL_/PROD_APP_URL: one root .env, two profiles.
@@ -10,11 +17,11 @@ const DEFAULT_PROD = 'https://api.rudrasfarmfresh.in'
  */
 export function resolveViteApiUrl(mode, appRoot) {
   const repoRoot = path.resolve(appRoot, '..')
-  const appEnv = loadEnv(mode, appRoot, '')
+  const appEnv = loadEnv(mode, appRoot, appRoot)
   const override = appEnv.VITE_API_URL?.trim()
   if (override) return override.replace(/\/$/, '')
 
-  const rootEnv = loadEnv(mode, repoRoot, '')
+  const rootEnv = loadEnv(mode, appRoot, repoRoot)
   const prefix = mode === 'production' ? 'PROD_' : 'LOCAL_'
   const fromRoot = rootEnv[`${prefix}APP_URL`]?.trim()
   if (fromRoot) return fromRoot.replace(/\/$/, '')

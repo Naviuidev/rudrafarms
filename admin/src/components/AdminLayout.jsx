@@ -221,7 +221,11 @@ export default function AdminLayout() {
                 key={item.id}
                 type="button"
                 aria-current={siteSection === item.id ? 'page' : undefined}
-                onClick={() => setParams({ section: item.id })}
+                onClick={() => setParams(() => {
+                  const next = new URLSearchParams()
+                  next.set('section', item.id)
+                  return next
+                })}
               >
                 {item.label}
               </button>

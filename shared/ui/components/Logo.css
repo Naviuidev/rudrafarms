@@ -7,14 +7,14 @@
 
 .logo__image {
   display: block;
-  width: 64px;
-  height: 64px;
+  width: 72px;
+  height: 72px;
   object-fit: contain;
 }
 
 @media (max-width: 720px) {
   .logo__image {
-    width: 48px;
-    height: 48px;
+    width: 56px;
+    height: 56px;
   }
 }

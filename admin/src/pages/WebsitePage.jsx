@@ -4,6 +4,7 @@ import DocumentTitle from '@brand/components/DocumentTitle.jsx'
 import { OrdersError, fetchAdminOrders } from '../api/ordersApi.js'
 import { useLiveRefresh } from '../hooks/useLiveRefresh.js'
 import { websiteSection, websiteSections } from '../website/sections.js'
+import WebsiteFaqsPage from './WebsiteFaqsPage.jsx'
 
 function formatInr(n) {
   return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(Number(n) || 0)
@@ -45,6 +46,10 @@ export default function WebsitePage() {
   useLiveRefresh(() => load({ silent: true }), 15000)
 
   const showReason = section === 'cancelled'
+
+  if (section === 'faqs') {
+    return <WebsiteFaqsPage />
+  }
 
   return (
     <>

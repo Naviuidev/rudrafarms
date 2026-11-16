@@ -287,6 +287,18 @@ final class SubscriptionService
             $payload['skips'] = self::skipsForSubscription($id);
             $payload['upcomingDeliveries'] = self::upcomingDeliveries($id, 14);
             $payload['pastDeliveries'] = self::pastDeliveries($id, 14);
+            $calendarCycle = SubscriptionDeliveryDays::activeCycle($cycles);
+            if (is_array($calendarCycle)) {
+                $payload['calendarCycle'] = [
+                    'id' => (string) ($calendarCycle['id'] ?? ''),
+                    'periodStart' => (string) ($calendarCycle['periodStart'] ?? ''),
+                    'periodEnd' => (string) ($calendarCycle['periodEnd'] ?? ''),
+                ];
+                $payload['deliveryDays'] = SubscriptionDeliveryDays::forCycle($id, $calendarCycle, true);
+            } else {
+                $payload['calendarCycle'] = null;
+                $payload['deliveryDays'] = [];
+            }
         }
 
         return $payload;
