@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import MobileTabBar from './MobileTabBar.jsx'
+import StoreFarmPromiseSection from './StoreFarmPromiseSection.jsx'
 import StoreFaqSection from './StoreFaqSection.jsx'
 import StoreFooter from './StoreFooter.jsx'
 import StoreHeader from './StoreHeader.jsx'
@@ -30,6 +31,7 @@ export default function StoreLayout() {
       <main id="main">
         <Outlet />
       </main>
+      <StoreFarmPromiseSection />
       <StoreFaqSection />
       <StoreFooter />
       <MobileTabBar />
