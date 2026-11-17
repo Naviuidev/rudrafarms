@@ -867,21 +867,99 @@ body:has(.auth-screen) {
   font-size: clamp(1.8rem, 3vw, 2.7rem);
 }
 
-.farm-banner {
+.farm-banner-slider {
+  position: relative;
+  width: 100%;
+  min-height: clamp(280px, 38vw, 480px);
+  overflow: hidden;
+  background: #e4ebe6;
+}
+
+.farm-banner-slider__track {
+  display: flex;
+  width: 100%;
+  transition: transform 0.65s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
+}
+
+.farm-banner--slide {
+  flex: 0 0 100%;
+  min-width: 100%;
+  min-height: clamp(280px, 38vw, 480px);
+}
+
+.farm-banner-slider__dots {
+  position: absolute;
+  z-index: 3;
+  right: max(16px, calc((100% - 1120px) / 2));
+  bottom: 16px;
+  display: flex;
+  gap: 8px;
+}
+
+.farm-banner-slider__dot {
+  width: 9px;
+  height: 9px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.45);
+  cursor: pointer;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.farm-banner-slider__dot--active {
+  transform: scale(1.15);
+  background: #d6ef6a;
+}
+
+.farm-banner-slider__dot:focus-visible {
+  outline: 2px solid #d6ef6a;
+  outline-offset: 2px;
+}
+
+.farm-banner,
+.farm-banner--slide {
   position: relative;
   display: flex;
   align-items: center;
   width: 100%;
-  min-height: 320px;
   margin: 0;
-  padding: 48px max(16px, calc((100% - 1120px) / 2));
+  padding: 40px max(16px, calc((100% - 1120px) / 2));
   overflow: hidden;
   border-radius: 0;
   background-color: #1c2a1f;
   background-position: center;
-  background-size: cover;
   background-repeat: no-repeat;
   text-align: left;
+}
+
+.farm-banner--fit-cover {
+  background-size: cover;
+}
+
+.farm-banner--fit-contain {
+  background-color: #dfece3;
+  background-size: 100% auto;
+  background-position: center center;
+}
+
+@media (min-width: 900px) {
+  .farm-banner--fit-contain {
+    background-size: contain;
+  }
+}
+
+.farm-banner--shade-deep .farm-banner__shade {
+  background:
+    linear-gradient(90deg, rgba(8, 14, 22, 0.82) 0%, rgba(8, 14, 22, 0.62) 48%, rgba(8, 14, 22, 0.45) 100%),
+    linear-gradient(180deg, rgba(6, 10, 16, 0.35) 0%, rgba(6, 10, 16, 0.55) 100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .farm-banner-slider__track {
+    transition: none;
+  }
 }
 
 .farm-banner__shade {
