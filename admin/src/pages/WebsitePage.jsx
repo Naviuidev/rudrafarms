@@ -4,6 +4,7 @@ import DocumentTitle from '@brand/components/DocumentTitle.jsx'
 import { OrdersError, fetchAdminOrders } from '../api/ordersApi.js'
 import { useLiveRefresh } from '../hooks/useLiveRefresh.js'
 import { websiteSection, websiteSections } from '../website/sections.js'
+import WebsiteContactQueriesPage from './WebsiteContactQueriesPage.jsx'
 import WebsiteFaqsPage from './WebsiteFaqsPage.jsx'
 
 function formatInr(n) {
@@ -49,6 +50,10 @@ export default function WebsitePage() {
 
   if (section === 'faqs') {
     return <WebsiteFaqsPage />
+  }
+
+  if (section === 'contact-queries') {
+    return <WebsiteContactQueriesPage />
   }
 
   return (

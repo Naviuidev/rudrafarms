@@ -1,6 +1,7 @@
 const sections = [
   { id: 'profile', label: 'Profile' },
   { id: 'addresses', label: 'Saved addresses' },
+  { id: 'support', label: 'Support' },
 ]
 
 export default function AccountSectionNav({ active, onSelect }) {

@@ -2,26 +2,21 @@ import { useShop } from '../context/shopContext.js'
 
 export default function DeliveryBar() {
   const { deliverySummary, openLocationSheet, locationsReady } = useShop()
-  const { primary, secondary } = deliverySummary
+  const { primary } = deliverySummary
+  const label = locationsReady ? primary : 'Loading…'
 
   return (
-    <div className="container delivery-bar">
+    <div className="container-fluid delivery-bar">
       <button
         type="button"
         className="delivery-bar__btn"
         onClick={openLocationSheet}
-        aria-label={`Delivery location: ${primary}. ${secondary}`}
+        aria-label={`Delivery location: ${label}`}
       >
         <span className="delivery-bar__icon" aria-hidden="true">
           <PinIcon />
         </span>
-        <span className="delivery-bar__text">
-          <span className="delivery-bar__eyebrow">Deliver to</span>
-          <span className="delivery-bar__line">
-            <strong>{locationsReady ? primary : 'Loading…'}</strong>
-            {secondary ? <span className="delivery-bar__sub">{secondary}</span> : null}
-          </span>
-        </span>
+        <span className="delivery-bar__name">{label}</span>
         <span className="delivery-bar__chev" aria-hidden="true">▾</span>
       </button>
     </div>

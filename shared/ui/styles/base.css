@@ -116,6 +116,13 @@ textarea {
   margin-inline: auto;
 }
 
+.container-fluid {
+  width: 100%;
+  max-width: 100%;
+  margin-inline: auto;
+  padding-inline: 16px;
+}
+
 .sr-only {
   position: absolute;
   width: 1px;

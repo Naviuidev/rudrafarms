@@ -66,16 +66,31 @@ export default function UserAccountMenu({ className = '' }) {
         onClick={toggleMenu}
       >
         <UserIcon />
-        <span className="tool__label">{label}</span>
+        <span className="tool__label user-menu__name-label">{label}</span>
       </button>
       <div className="user-menu__drop">
         <div className="user-menu__panel" role="menu" aria-label="Account">
+          <div className="user-menu__profile" role="presentation">
+            <strong className="user-menu__name">{account.name}</strong>
+            <span className="user-menu__email">{account.email}</span>
+            {account.phone ? <span className="user-menu__phone">{account.phone}</span> : null}
+          </div>
+          <Link to="/account" className="user-menu__item" role="menuitem" onClick={() => setOpen(false)}>
+            Profile
+          </Link>
+          <Link to="/account?tab=support" className="user-menu__item" role="menuitem" onClick={() => setOpen(false)}>
+            Support
+          </Link>
+          <Link to="/account?tab=addresses" className="user-menu__item" role="menuitem" onClick={() => setOpen(false)}>
+            Saved addresses
+          </Link>
           <Link to="/orders" className="user-menu__item" role="menuitem" onClick={() => setOpen(false)}>
             Orders
           </Link>
           <Link to="/account/settings" className="user-menu__item" role="menuitem" onClick={() => setOpen(false)}>
             Settings
           </Link>
+          <div className="user-menu__rule" role="separator" />
           <button type="button" className="user-menu__item user-menu__item--action" role="menuitem" onClick={signOut}>
             Log out
           </button>

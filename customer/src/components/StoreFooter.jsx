@@ -30,6 +30,7 @@ export default function StoreFooter() {
         </div>
         <div>
           <h2>Help</h2>
+          <Link to="/about">About us</Link>
           <Link to="/support/contact">Contact</Link>
           <Link to="/support/delivery">Delivery policy</Link>
           <Link to="/support/privacy">Privacy</Link>

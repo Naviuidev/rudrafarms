@@ -8,3 +8,4 @@ backend/storage/locations.json
 backend/storage/catalog.seeded
 backend/storage/hero.json
 backend/storage/faqs.json
+backend/storage/contact-queries.json

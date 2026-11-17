@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import Button from '@brand/components/Button.jsx'
 import DocumentTitle from '@brand/components/DocumentTitle.jsx'
@@ -7,6 +7,8 @@ import { useToast } from '@brand/toastContext.js'
 import { AuthError, resendVerification } from '../api/authApi.js'
 import AccountSectionNav from '../components/AccountSectionNav.jsx'
 import AddressBook from '../components/AddressBook.jsx'
+import SupportConversationList from '../components/SupportConversationList.jsx'
+import { ContactError, loadMyContactQueries } from '../api/contactApi.js'
 import { useShop } from '../context/shopContext.js'
 
 export default function AccountPage() {
@@ -14,13 +16,17 @@ export default function AccountPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const [params, setParams] = useSearchParams()
-  const tab = params.get('tab') === 'addresses' ? 'addresses' : 'profile'
+  const tabParam = params.get('tab')
+  const tab = tabParam === 'addresses' ? 'addresses' : tabParam === 'support' ? 'support' : 'profile'
   const returnFrom = `${location.pathname}${location.search}`
   const showToast = useToast()
   const [profile, setProfile] = useState(null)
   const [profileErrors, setProfileErrors] = useState({})
   const [previewUrl, setPreviewUrl] = useState('')
   const [busy, setBusy] = useState('')
+  const [supportQueries, setSupportQueries] = useState([])
+  const [supportError, setSupportError] = useState('')
+  const [supportBusy, setSupportBusy] = useState(false)
 
   const draft = profile || { name: account?.name || '', phone: account?.phone || '' }
 
@@ -32,7 +38,25 @@ export default function AccountPage() {
     setParams({ tab: next }, { replace: true })
   }
 
-  if (authReady && !account && tab !== 'addresses') {
+  const loadSupport = useCallback(() => {
+    if (!account) return Promise.resolve()
+    setSupportError('')
+    setSupportBusy(true)
+    return loadMyContactQueries()
+      .then(setSupportQueries)
+      .catch((reason) => setSupportError(reason instanceof ContactError ? reason.message : 'Support messages could not be loaded.'))
+      .finally(() => setSupportBusy(false))
+  }, [account])
+
+  useEffect(() => {
+    if (tab === 'support' && account) loadSupport()
+  }, [tab, account, loadSupport])
+
+  function onSupportUpdated(next) {
+    setSupportQueries((current) => current.map((row) => (row.id === next.id ? next : row)))
+  }
+
+  if (authReady && !account && tab !== 'addresses' && tab !== 'support') {
     return (
       <section className="section account-page">
         <DocumentTitle title="Account" />
@@ -87,7 +111,7 @@ export default function AccountPage() {
 
   return (
     <section className="section account-page">
-      <DocumentTitle title={tab === 'addresses' ? 'Saved addresses' : 'Account'} />
+      <DocumentTitle title={tab === 'addresses' ? 'Saved addresses' : tab === 'support' ? 'Support' : 'Account'} />
       <div className="container narrow">
         <header className="account-head">
           <h1>Account</h1>
@@ -117,8 +141,13 @@ export default function AccountPage() {
             {previewUrl ? (
               <p className="auth-note">Verification link: <a href={previewUrl}>{previewUrl}</a></p>
             ) : null}
+            <div className="account-profile-card panel" aria-label="Account summary">
+              <strong>{account.name}</strong>
+              <span className="subs-muted">{account.email}</span>
+              {account.phone ? <span className="subs-muted">{account.phone}</span> : null}
+            </div>
             <form className="form-grid account-form" onSubmit={saveProfile} noValidate>
-              <h2 className="account-panel__title">Profile</h2>
+              <h2 className="account-panel__title">Edit profile</h2>
               <TextField
                 id="account-name"
                 label="Name"
@@ -147,6 +176,36 @@ export default function AccountPage() {
               <Link to="/account/settings">Settings</Link>
               <button type="button" className="text-button" onClick={signOut}>Log out</button>
             </nav>
+          </section>
+        ) : null}
+
+        {authReady && !account && tab === 'support' ? (
+          <section id="account-panel-support" role="tabpanel" aria-labelledby="account-tab-support" className="account-tab-panel">
+            <div className="panel auth-card">
+              <h2 className="account-panel__title">Sign in for support</h2>
+              <p className="subs-muted">Your contact queries and replies from Rudra&apos;s Farm Fresh appear here.</p>
+              <Button to="/login" state={{ from: '/account?tab=support' }}>Sign in</Button>
+            </div>
+          </section>
+        ) : null}
+
+        {authReady && account && tab === 'support' ? (
+          <section
+            id="account-panel-support"
+            role="tabpanel"
+            aria-labelledby="account-tab-support"
+            className="account-tab-panel"
+          >
+            <h2 className="account-panel__title">Support conversations</h2>
+            <p className="subs-muted">Queries you raised on the <Link to="/support/contact">Contact</Link> page.</p>
+            {supportError ? <p className="field__error" role="alert">{supportError}</p> : null}
+            {supportBusy ? <p className="subs-muted" role="status">Loading…</p> : null}
+            {!supportBusy && supportQueries.length === 0 ? (
+              <p className="subs-muted">No messages yet. <Link to="/support/contact">Contact us</Link> if you need help.</p>
+            ) : null}
+            {supportQueries.length > 0 ? (
+              <SupportConversationList queries={supportQueries} allowReply onUpdated={onSupportUpdated} />
+            ) : null}
           </section>
         ) : null}
 

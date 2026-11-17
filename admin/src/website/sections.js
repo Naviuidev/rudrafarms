@@ -3,6 +3,7 @@ export const websiteSections = [
   { id: 'pending', label: 'Pending payments', title: 'Pending payments', copy: 'Bills that are still waiting for payment.' },
   { id: 'confirmed', label: 'Order confirmed', title: 'Order confirmed', copy: 'Paid orders, from confirmation through delivery.' },
   { id: 'faqs', label: "FAQ's" },
+  { id: 'contact-queries', label: 'Contact queries' },
 ]
 
 const legacyFaqSections = new Set(['faqs-list', 'faqs-add'])
@@ -10,6 +11,9 @@ const legacyFaqSections = new Set(['faqs-list', 'faqs-add'])
 export function websiteSection(value) {
   if (value === 'faqs' || legacyFaqSections.has(value)) {
     return 'faqs'
+  }
+  if (value === 'contact-queries') {
+    return 'contact-queries'
   }
   return websiteSections.some((item) => item.id === value) ? value : 'cancelled'
 }

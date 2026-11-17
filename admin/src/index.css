@@ -3295,3 +3295,71 @@ body:has(.auth-split) {
   color: #166534;
   font-weight: 600;
 }
+
+.contact-query-detail {
+  margin-top: 20px;
+}
+
+.contact-admin-thread {
+  display: grid;
+  gap: 10px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.contact-query-detail__form {
+  margin-top: 16px;
+}
+
+.contact-query__status {
+  padding: 4px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 999px;
+  background: #fff;
+  color: #6b7280;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.contact-query__status--done {
+  border-color: #86efac;
+  background: #ecfdf5;
+  color: #166534;
+}
+
+.contact-query-row--active td {
+  background: rgba(34, 139, 69, 0.06);
+}
+
+.admin .contact-bubble {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+}
+
+.admin .contact-bubble--customer {
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+}
+
+.admin .contact-bubble--admin {
+  background: rgba(34, 139, 69, 0.1);
+  border: 1px solid #b7e4c7;
+}
+
+.admin .contact-bubble__meta {
+  margin: 0 0 4px;
+  color: #6b7280;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.admin .contact-bubble__body {
+  margin: 0;
+  color: #111827;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}

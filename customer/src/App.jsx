@@ -25,6 +25,7 @@ import QuickDeliveryPage from './pages/QuickDeliveryPage.jsx'
 import ShopPage from './pages/ShopPage.jsx'
 import SubscriptionsPage from './pages/SubscriptionsPage.jsx'
 import SubscriptionDetailPage from './pages/SubscriptionDetailPage.jsx'
+import AboutPage from './pages/AboutPage.jsx'
 import SupportPage from './pages/SupportPage.jsx'
 import WishlistPage from './pages/WishlistPage.jsx'
 
@@ -60,6 +61,7 @@ export default function App() {
               <Route path="account/settings" element={<SettingsPage />} />
               <Route path="orders" element={<OrdersPage />} />
               <Route path="orders/:orderId" element={<OrderDetailPage />} />
+              <Route path="about" element={<AboutPage />} />
               <Route path="support/:page" element={<SupportPage />} />
               <Route path="*" element={<NotFoundPage />} />
             </Route>
