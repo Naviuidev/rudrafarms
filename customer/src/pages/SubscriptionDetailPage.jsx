@@ -3,6 +3,7 @@ import Button from '@brand/components/Button.jsx'
 import DocumentTitle from '@brand/components/DocumentTitle.jsx'
 import ErrorState from '@brand/components/ErrorState.jsx'
 import { SubscriptionApiError, fetchSubscriptionDetail } from '../api/subscriptionApi.js'
+import SubscriptionCalendarDock from '../components/SubscriptionCalendarDock.jsx'
 import SubscriptionManagePanel, { prettyDate, scheduleLabel } from '../components/SubscriptionManagePanel.jsx'
 import { useShop } from '../context/shopContext.js'
 import { useParams } from 'react-router-dom'
@@ -68,8 +69,9 @@ export default function SubscriptionDetailPage() {
           <p className="subs-muted">{scheduleLabel(sub.scheduleKey)} · Started {prettyDate(sub.startDate)}</p>
         </header>
 
-        <SubscriptionManagePanel sub={sub} onSubChange={setSub} error={error} onError={setError} showBackLink />
+        <SubscriptionManagePanel sub={sub} error={error} showBackLink />
       </div>
+      <SubscriptionCalendarDock sub={sub} onSubChange={setSub} />
     </section>
   )
 }

@@ -4,6 +4,7 @@ export default function DeliveryBar() {
   const { deliverySummary, openLocationSheet, locationsReady } = useShop()
   const { primary } = deliverySummary
   const label = locationsReady ? primary : 'Loading…'
+  const displayLabel = shortenLocationLabel(label)
 
   return (
     <div className="container-fluid delivery-bar">
@@ -16,11 +17,17 @@ export default function DeliveryBar() {
         <span className="delivery-bar__icon" aria-hidden="true">
           <PinIcon />
         </span>
-        <span className="delivery-bar__name">{label}</span>
+        <span className="delivery-bar__name">{displayLabel}</span>
         <span className="delivery-bar__chev" aria-hidden="true">▾</span>
       </button>
     </div>
   )
+}
+
+function shortenLocationLabel(name, maxChars = 6) {
+  if (!name || name === 'Loading…') return name
+  const chars = [...String(name)]
+  return chars.length <= maxChars ? chars.join('') : `${chars.slice(0, maxChars).join('')}…`
 }
 
 function PinIcon() {

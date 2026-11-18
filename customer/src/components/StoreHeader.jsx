@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
-import { NavLink, useLocation, useNavigate } from 'react-router-dom'
+import { NavLink, useLocation, useSearchParams } from 'react-router-dom'
 import Logo from '@brand/components/Logo.jsx'
 import DeliveryBar from './DeliveryBar.jsx'
 import LocationSheet from './LocationSheet.jsx'
+import ProductSearchOverlay from './ProductSearchOverlay.jsx'
 import UserAccountMenu from './UserAccountMenu.jsx'
 import { useShop } from '../context/shopContext.js'
 
@@ -16,10 +17,10 @@ const links = [
 
 export default function StoreHeader({ compact = false }) {
   const { pathname } = useLocation()
-  const navigate = useNavigate()
-  const [query, setQuery] = useState('')
+  const [params] = useSearchParams()
+  const [query, setQuery] = useState(() => params.get('q') || '')
+  const [searchOpen, setSearchOpen] = useState(false)
   const { count, wishlist, locationSheetOpen, closeLocationSheet } = useShop()
-  const [navCollapsed, setNavCollapsed] = useState(false)
   const [navOpen, setNavOpen] = useState(false)
 
   useEffect(() => {
@@ -27,60 +28,26 @@ export default function StoreHeader({ compact = false }) {
   }, [pathname])
 
   useEffect(() => {
-    if (compact) return undefined
-    let frame = 0
-    let last = window.scrollY
-    let accumulated = 0
+    if (pathname !== '/shop') return
+    const q = params.get('q') || ''
+    setQuery(q)
+  }, [pathname, params])
 
-    function desktopChrome() {
-      return window.matchMedia('(min-width: 1024px)').matches
-    }
-
-    const onScroll = () => {
-      cancelAnimationFrame(frame)
-      frame = requestAnimationFrame(() => {
-        if (!desktopChrome()) {
-          setNavCollapsed(false)
-          return
-        }
-        const y = window.scrollY
-        const delta = y - last
-        last = y
-        if (y <= 12) {
-          accumulated = 0
-          setNavCollapsed(false)
-          return
-        }
-        if (delta === 0) return
-        if ((accumulated > 0 && delta < 0) || (accumulated < 0 && delta > 0)) accumulated = 0
-        accumulated += delta
-        if (accumulated > 36) setNavCollapsed(true)
-        else if (accumulated < -28) setNavCollapsed(false)
-      })
-    }
-
-    const onResize = () => {
-      if (!desktopChrome()) setNavCollapsed(false)
-    }
-
-    onScroll()
-    window.addEventListener('scroll', onScroll, { passive: true })
-    window.addEventListener('resize', onResize)
-    return () => {
-      cancelAnimationFrame(frame)
-      window.removeEventListener('scroll', onScroll)
-      window.removeEventListener('resize', onResize)
-    }
-  }, [compact])
+  function openSearch() {
+    setSearchOpen(true)
+  }
 
   function searchProducts(event) {
     event.preventDefault()
-    const term = query.trim()
-    navigate(term ? `/shop?q=${encodeURIComponent(term)}` : '/shop')
+    openSearch()
+  }
+
+  function closeSearch() {
+    setSearchOpen(false)
   }
 
   return (
-    <div className={`chrome${navCollapsed ? ' chrome--nav-collapsed' : ''}`}>
+    <div className="chrome">
       <header className="header">
         <div className="container-fluid header__bar">
           <div className="header__start">
@@ -91,30 +58,25 @@ export default function StoreHeader({ compact = false }) {
               <DeliveryBar />
             </div>
           )}
-          <form className="header-search" role="search" onSubmit={searchProducts}>
-            <label className="sr-only" htmlFor="header-search">Search products</label>
-            <input
-              id="header-search"
-              type="search"
-              placeholder="Search products"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-            />
-            <button type="submit" aria-label="Search">
-              <SearchIcon />
-            </button>
-          </form>
-          {compact ? null : (
-            <nav id="primary-nav" className="nav nav--desktop nav--inline" aria-label="Primary">
-              <div className="nav__row nav__row--desktop">
-                {links.map((link) => (
-                  <NavLink key={link.to} to={link.to}>
-                    {link.label}
-                  </NavLink>
-                ))}
-              </div>
-            </nav>
-          )}
+          <div className="header__nav-cluster">
+            <form className="header-search" role="search" onSubmit={searchProducts}>
+              <label className="sr-only" htmlFor="header-search">Search products</label>
+              <input
+                id="header-search"
+                type="search"
+                placeholder="Search products"
+                value={query}
+                readOnly
+                onClick={openSearch}
+                onFocus={openSearch}
+                aria-haspopup="dialog"
+                aria-expanded={searchOpen}
+              />
+              <button type="button" aria-label="Search" onClick={openSearch}>
+                <SearchIcon />
+              </button>
+            </form>
+          </div>
           <div className="header__tools">
             <button
               type="button"
@@ -126,6 +88,17 @@ export default function StoreHeader({ compact = false }) {
             >
               <MenuIcon open={navOpen} />
             </button>
+            {compact ? null : (
+              <nav id="primary-nav" className="nav nav--desktop nav--inline header__tools-nav" aria-label="Primary">
+                <div className="nav__row nav__row--desktop">
+                  {links.map((link) => (
+                    <NavLink key={link.to} to={link.to}>
+                      {link.label}
+                    </NavLink>
+                  ))}
+                </div>
+              </nav>
+            )}
             <NavLink
               to="/wishlist"
               className="tool header__wish"
@@ -153,6 +126,12 @@ export default function StoreHeader({ compact = false }) {
           </div>
         )}
         <LocationSheet open={locationSheetOpen} onClose={closeLocationSheet} />
+        <ProductSearchOverlay
+          open={searchOpen}
+          initialQuery={query}
+          onClose={closeSearch}
+          onCommit={setQuery}
+        />
         {compact ? null : (
           <nav
             id="mobile-nav"

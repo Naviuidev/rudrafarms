@@ -9,9 +9,11 @@ import { checkServiceability } from '../api/locationApi.js'
 import {
   SubscriptionApiError,
   fetchSubscriptionCatalog,
+  fetchSubscriptionDetail,
   quoteSubscription,
   startSubscription,
 } from '../api/subscriptionApi.js'
+import SubscriptionCalendarDock from '../components/SubscriptionCalendarDock.jsx'
 import { payWithRazorpay, verifyQuickPayment } from '../api/checkoutApi.js'
 import ManagedSubscriptionRow from '../components/ManagedSubscriptionRow.jsx'
 import ProductCard from '../components/ProductCard.jsx'
@@ -58,6 +60,13 @@ export default function SubscriptionsPage() {
   const [payError, setPayError] = useState('')
   const acceptingWebsiteOrders = useWebsiteOrdersGate()
   const [managedSubId, setManagedSubId] = useState('')
+  const [dockSub, setDockSub] = useState(null)
+  const [dockLoading, setDockLoading] = useState(false)
+
+  const activeSubscriptions = useMemo(
+    () => mySubscriptions.filter((sub) => sub.status !== 'cancelled' && sub.status !== 'pending_payment'),
+    [mySubscriptions],
+  )
 
   const { service, checking, error: checkError } = useServiceCheck(defaultAddress, 'subscription')
   const outsideArea = Boolean(service && !service.subscription)
@@ -144,6 +153,28 @@ export default function SubscriptionsPage() {
   useEffect(() => {
     loadCatalog()
   }, [loadCatalog])
+
+  useEffect(() => {
+    const focusId = managedSubId || activeSubscriptions[0]?.id
+    if (!focusId || !account) {
+      setDockSub(null)
+      return undefined
+    }
+    let cancel = false
+    setDockLoading(true)
+    fetchSubscriptionDetail(focusId).then((data) => {
+      if (cancel) return
+      setDockSub(data.subscription)
+      setDockLoading(false)
+    }).catch(() => {
+      if (cancel) return
+      setDockSub(null)
+      setDockLoading(false)
+    })
+    return () => {
+      cancel = true
+    }
+  }, [account, managedSubId, activeSubscriptions])
 
   function selectProduct(product) {
     setMode('custom')
@@ -372,17 +403,23 @@ export default function SubscriptionsPage() {
           ) : null}
         </section>
 
-        {mySubscriptions.filter((sub) => sub.status !== 'cancelled' && sub.status !== 'pending_payment').length > 0 ? (
+        {account && activeSubscriptions.length > 0 ? (
           <div className="panel subs-your" style={{ marginBottom: '1.5rem' }}>
             <h2 className="subs-label">Your subscriptions</h2>
+            <p className="subs-muted subs-muted--small">Active plan, basket, billing, and deliveries. Use the calendar on the right for skips and pauses.</p>
             <ul className="subs-list subs-list--manage">
-              {mySubscriptions.filter((sub) => sub.status !== 'cancelled' && sub.status !== 'pending_payment').map((sub) => (
+              {activeSubscriptions.map((sub) => (
                 <ManagedSubscriptionRow
                   key={sub.id}
                   sub={sub}
                   open={managedSubId === sub.id}
                   onToggle={() => setManagedSubId((current) => (current === sub.id ? '' : sub.id))}
-                  onSubscriptionChange={() => loadCatalog()}
+                  onSubscriptionChange={(next) => {
+                    if (next && typeof next === 'object' && next.id) {
+                      setDockSub(next)
+                    }
+                    loadCatalog()
+                  }}
                 />
               ))}
             </ul>
@@ -576,6 +613,16 @@ export default function SubscriptionsPage() {
           </aside>
         </div> : null}
       </div>
+      {account && activeSubscriptions.length > 0 ? (
+        <SubscriptionCalendarDock
+          sub={dockSub}
+          loading={dockLoading}
+          onSubChange={(next) => {
+            setDockSub(next)
+            loadCatalog()
+          }}
+        />
+      ) : null}
     </section>
   )
 }

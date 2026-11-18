@@ -46,11 +46,7 @@ final class Support
 
     public static function otpEnabled(): bool
     {
-        if (filter_var($_ENV['AUTH_OTP_ENABLED'] ?? false, FILTER_VALIDATE_BOOLEAN)) {
-            return true;
-        }
-
-        return Mail::configured();
+        return filter_var($_ENV['AUTH_OTP_ENABLED'] ?? false, FILTER_VALIDATE_BOOLEAN);
     }
 
     /** @param array<string, mixed> $row */

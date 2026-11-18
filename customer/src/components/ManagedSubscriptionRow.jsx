@@ -59,9 +59,7 @@ export default function ManagedSubscriptionRow({ sub, open, onToggle, onSubscrip
           {!loading && detail ? (
             <SubscriptionManagePanel
               sub={detail}
-              onSubChange={handleSubChange}
-              externalError=""
-              onError={setLoadError}
+              error={loadError}
             />
           ) : null}
         </div>
