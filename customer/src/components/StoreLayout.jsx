@@ -23,6 +23,9 @@ function LocationPrompt() {
 }
 
 export default function StoreLayout() {
+  const { pathname } = useLocation()
+  const isHome = pathname === '/'
+
   return (
     <div className="store">
       <a className="skip-link" href="#main">Skip to content</a>
@@ -31,7 +34,7 @@ export default function StoreLayout() {
       <main id="main">
         <Outlet />
       </main>
-      <StoreFarmPromiseSection />
+      {isHome ? <StoreFarmPromiseSection /> : null}
       <StoreFaqSection />
       <StoreFooter />
       <MobileTabBar />
